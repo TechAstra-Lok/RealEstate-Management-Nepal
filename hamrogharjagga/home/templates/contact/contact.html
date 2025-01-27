@@ -1,0 +1,155 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us - HamroGhajagga</title>
+
+    <!-- Static CSS -->
+    <link rel="stylesheet" href="{% static 'styles/main.css' %}" />
+    <!-- Bootstrap CSS (for grid and responsiveness) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <style>
+        /* Pop-up styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            z-index: 9999;
+            width: 300px;
+        }
+
+        .popup.success {
+            border-left: 5px solid #28a745;
+        }
+
+        .popup.error {
+            border-left: 5px solid #dc3545;
+        }
+
+        .popup .fa {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .popup .message {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .popup button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: var(--secondary-color);
+        }
+    </style>
+</head>
+
+<body style="background-color: var(--light-gray); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+
+    <div class="container mt-5" style="background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);">
+        <!-- Contact Us Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="text-center" style="color: var(--primary-color); font-size: 2.5rem; font-weight: bold; text-transform: uppercase; margin-bottom: 20px;">Contact Us</h2>
+                <p style="font-size: 1.1rem; color: var(--text-color); line-height: 1.8;">We'd love to hear from you! Whether you have a question, feedback, or need assistance, feel free to reach out to us using the form below or via email.</p>
+                
+                <!-- Contact Form -->
+                <form action="#" method="POST" style="margin-top: 30px;" onsubmit="return showPopup(event)">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="name" class="form-label" style="color: var(--primary-color); font-weight: bold;">Your Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Enter your name" style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label" style="color: var(--primary-color); font-weight: bold;">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email" style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label" style="color: var(--primary-color); font-weight: bold;">Your Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="5" required placeholder="Write your message here" style="border: 1px solid #ddd; border-radius: 8px; padding: 12px 15px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn" style="background: linear-gradient(to right, var(--gradient-start), var(--gradient-end)); color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer;">Submit</button>
+                </form>
+
+                <div class="row mt-5">
+                    <div class="col-md-6">
+                        <h4 style="color: var(--primary-color); font-weight: bold;">Visit Us</h4>
+                        <p style="color: var(--text-color);">HamroGhajagga, Real Estate Platform, Kathmandu, Nepal</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 style="color: var(--primary-color); font-weight: bold;">Contact Details</h4>
+                        <ul style="list-style: none; padding: 0; color: var(--text-color);">
+                            <li><i class="fa fa-phone" style="color: var(--accent-color);"></i> +977 123 456 789</li>
+                            <li><i class="fa fa-envelope" style="color: var(--accent-color);"></i> <a href="mailto:info@hamrogharjagga.com" style="color: var(--primary-color); font-weight: bold;">info@hamrogharjagga.com</a></li>
+                            <li><i class="fa fa-location-dot" style="color: var(--accent-color);"></i> Kathmandu, Nepal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <footer class="text-center mt-5" style="background-color: var(--primary-color); color: white; padding: 20px 0; border-radius: 10px;">
+            <p style="font-size: 1rem;">© 2025 HamroGhajagga | All Rights Reserved</p>
+        </footer>
+    </div>
+
+    <!-- Success/Error Popup -->
+    <div id="popup" class="popup">
+        <i class="fa fa-check-circle success" style="color: #28a745;"></i>
+        <div class="message" style="color: var(--primary-color);"></div>
+        <button onclick="closePopup()">OK</button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function showPopup(event) {
+            event.preventDefault(); // Prevent form from submitting
+
+            // Show the popup with success message
+            let popup = document.getElementById('popup');
+            let message = document.querySelector('.popup .message');
+            popup.style.display = 'block';
+            message.textContent = 'Your message has been successfully submitted!';
+            popup.classList.add('success');
+            popup.classList.remove('error');
+
+            // Reset form (you can modify this based on success)
+            document.querySelector('form').reset();
+
+            return false; // Optional: prevent form submission to keep the page as is
+        }
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+    </script>
+
+</body>
+
+</html>
