@@ -1,7 +1,8 @@
+# properties/views.py
 from django.shortcuts import render
+from .models import Property
 
-# Create your views here.
-from django.shortcuts import render
-
-def properties_view(request):
-    return render(request, 'properties.html')
+def find_land_view(request):
+    properties = Property.objects.all()
+    
+    return render(request, 'properties/properties.html', {'properties': properties})

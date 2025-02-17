@@ -1,6 +1,4 @@
-from django.shortcuts import render
-
-# Create your views here.
+import json
 from django.shortcuts import render
 from .models import DashboardItem
 

@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,7 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
+MEDIA_URL = '/media/'
+MEDIA_ROOT = [os.path.join(BASE_DIR, 'media')]
 # Application definition
 
 INSTALLED_APPS = [
@@ -39,6 +40,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'home',
     'dashboard',
+    'properties',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+    # You can add custom backends here if needed
 ]
 
 MIDDLEWARE = [
@@ -56,7 +63,7 @@ ROOT_URLCONF = 'hamrogharjagga.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],      
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,3 +134,21 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# settings.py
+
+# Disable caching in development
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
+LOGIN_REDIRECT_URL = '/dashboard/'
+
+AUTH_USER_MODEL = 'home.CustomUser'  # If you are using a custom user model
+
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Using database-backed sessions
+SESSION_COOKIE_AGE = 3600  # Set the session timeout in seconds (1 hour)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when the browser is closed

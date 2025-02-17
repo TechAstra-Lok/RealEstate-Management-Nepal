@@ -1,6 +1,7 @@
+# properties/urls.py
 from django.urls import path
-from .views import properties_view
+from . import views
 
 urlpatterns = [
-    path('', properties_view, name='properties'),
+    path('find_land/', views.find_land_view, name='find_land'),  # This will render properties.html
 ]
