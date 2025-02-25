@@ -177,6 +177,12 @@
   
   /* Mobile Responsiveness */
   @media (max-width: 991.98px) {
+
+    .dashboard-container {
+      display: flex;
+      flex-direction: column;
+    }
+    
     .dashboard-sidebar {
       transform: translateX(-100%);
     }

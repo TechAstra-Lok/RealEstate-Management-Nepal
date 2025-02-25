@@ -1,88 +1,101 @@
-from django.contrib.auth.decorators import login_required  
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib import messages
+from django.urls import reverse
 from django.http import JsonResponse
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from .models import CustomUser    
+from home.forms import RegisterForm, LoginForm
 
 
-# Home View (Redirect to dashboard if already logged in)
+
 def home_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')  # Redirect to dashboard if the user is logged in
-    return render(request, 'home/home.html')
-
-# Login View (For AJAX)
-def login_view(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        user = authenticate(request, username=email, password=password)
-        
-        if user is not None:
-            login(request, user)
-            return JsonResponse({'status': 'success', 'message': 'Login successful.'})
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Invalid username or password.'})
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
-
-# Register View (For AJAX)
-def register_view(request):
-    if request.method == 'POST':
-        # email = request.POST.get('email')
-        # full_name = request.POST.get('fullName')
-        # password = request.POST.get('password')
-        # confirm_password = request.POST.get('confirmPassword')
-        # if password != confirm_password:
-        #     return JsonResponse({'status': 'error', 'message': 'Passwords do not match.'})   
-        # try:
-        #     # Create user object
-        #     user = User.objects.create_user(username=email, email=email, password=password)
-        #     user.first_name = full_name
-        #     user.save()
-    #         # Automatically log in the user after registration
-    #         login(request, user)
-
-    #         return JsonResponse({'status': 'success', 'message': 'Registration successful! You are now logged in.'})
-    #     except Exception as e:
-    #         return JsonResponse({'status': 'error', 'message': 'Error creating account: ' + str(e)})
-
-    # return JsonResponse({'status': 'error', 'message': 'Invalid request method.'})
+        if request.user.role == "seller":
+            return redirect("seller:dashboard")
+        elif request.user.role == "buyer":
+            return redirect("buyer:find_land")
+        return render(request, "home/home.html")
+    else:
+        return render(request, "home/home.html") 
 
 
-        form = UserCreationForm(request.POST)
+def user_register(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return 'success'
+            password1 = form.cleaned_data["password1"]
+            password2 = form.cleaned_data["password2"]
+            
+            if password1 != password2:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Passwords do not match. Please try again.'
+                })
+            
+            try:
+                user = form.save(commit=False)
+                user.username = user.email  # Assuming email as username
+                user.set_password(password2)  # Hash the password
+                user.save()
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Registration successful! Please log in.',
+                    'redirect_url': reverse('home:login')
+                })
+            except Exception as e:
+                messages.error(request, "An error occurred. Please try again.")
+                return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred: ' + str(e)})
         else:
-            form= UserCreationForm()
-            return render(request, 'home/home.html', {'form': form})
+            print(form.errors)
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Registration failed. Please check the form for errors.'
+            })
+    else:
+        form = RegisterForm()
+        return render(request, "home/home.html", {"form": form})
+    
+
+def user_login(request):
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password2']
+            
+            # Authenticate the user
+            user = authenticate(request, username=email, password=password)
+            if user is not None:
+                login(request, user)
+
+                # Redirect based on user role
+                if user.role == 'buyer':
+                    return redirect('buyer:find_land')  # Redirect buyer to 'find_property'
+                elif user.role == 'seller':
+                    return redirect('seller:dashboard')  # Redirect seller to 'dashboard'
+                else:
+                    return redirect('home:home')  # Default redirect if role is neither buyer nor seller
+            else:
+                form.add_error('email', 'Invalid email or password')
+        else:
+            print(form.errors)  # Debugging: Check form errors if any
+    else:
+        form = LoginForm()
+
+    return render(request, 'home/home.html', {'form': form})
 
 
-# Logout View (For AJAX)
-def logout_view(request):
+def user_logout(request):
     logout(request)
-    return render(request, 'home/home.html')
+    messages.success(request, "You have been logged out.")
+    return redirect('home:home') 
 
-# Protected View that requires login
-@login_required
-def dashboard_view(request):
-    return render(request, 'dashboard/dashboard.html')
-
-
-# About View
 def about_view(request):
-    return render(request, 'about/about.html')
-
-# Terms View
+    return render(request, "about/about.html")
 def terms_view(request):
-    return render(request, 'terms/terms.html')
-
-# Privacy View
+    return render(request, "terms/terms.html")
 def privacy_view(request):
-    return render(request, 'privacy/privacy.html')       
-
-# Contact View
+    return render(request, "privacy/privacy.html")
 def contact_view(request):
-    return render(request, 'contact/contact.html', {'request': request})
+    return render(request, "contact/contact.html")

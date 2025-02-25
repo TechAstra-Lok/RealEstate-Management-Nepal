@@ -1,0 +1,183 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="properties-container">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Filter Sidebar -->
+      <div class="col-lg-3">
+        <div class="filter-panel glass-effect sticky-top" style="top: 80px;">
+          <h3><i class="fas fa-filter"></i> Filters</h3>
+
+          <!-- Location Search -->
+          <div class="filter-group">
+            <label><i class="fas fa-map-marker-alt"></i> Location</label>
+            <select class="form-control" id="location-search"></select>
+          </div>
+
+          <!-- Price Range -->
+          <div class="filter-group">
+            <label><i class="fas fa-money-bill-wave"></i> Price Range</label>
+            <div class="d-flex gap-2">
+              <select class="form-select" id="min-price">
+                <option value="">Min Price</option>
+                <option value="1000000">10 Lakhs</option>
+                <option value="5000000">50 Lakhs</option>
+              </select>
+              <select class="form-select" id="max-price">
+                <option value="">Max Price</option>
+                <option value="5000000">50 Lakhs</option>
+                <option value="10000000">1 Crore</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Area Range -->
+          <div class="filter-group">
+            <label><i class="fas fa-ruler-combined"></i> Area</label>
+            <div class="d-flex gap-2">
+              <input type="number" class="form-control" id="area-size" placeholder="Size" />
+              <select class="form-select" id="area-unit">
+                <option value="ropani">Ropani</option>
+                <option value="kattha">Kattha</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Property Type -->
+          <div class="filter-group">
+            <label><i class="fas fa-home"></i> Property Type</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="residential" id="type-residential" />
+              <label class="form-check-label" for="type-residential">Residential</label>
+            </div>
+          </div>
+
+          <!-- Road Access -->
+          <div class="filter-group">
+            <label><i class="fas fa-road"></i> Road Access</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="pitched" id="road-pitched" />
+              <label class="form-check-label" for="road-pitched">Pitched Road</label>
+            </div>
+          </div>
+
+          <!-- Sort Options -->
+          <div class="filter-group">
+            <label><i class="fas fa-sort"></i> Sort By</label>
+            <select class="form-select" id="sort-select">
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary w-100 mt-3" id="apply-filters">
+            <i class="fas fa-search"></i> Apply Filters
+          </button>
+        </div>
+      </div>
+
+      <!-- Map and Property List -->
+      <div class="col-lg-9">
+        <div class="row">
+          <!-- Map View -->
+          <div class="col-12 mb-4">
+            <div id="map" style="height: 400px;" class="rounded shadow"></div>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="col-12 mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="results-count">Showing <span id="results-count">0</span> properties</div>
+              <div class="view-toggle btn-group">
+                <button class="btn btn-outline-primary active" data-view="grid">
+                  <i class="fas fa-th"></i> Grid
+                </button>
+                <button class="btn btn-outline-primary" data-view="list">
+                  <i class="fas fa-list"></i> List
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Property List -->
+          <div class="col-12">
+            <div class="property-grid" id="property-list"></div>
+            <div class="text-center mt-4">
+              <button class="btn btn-primary btn-lg" id="load-more">
+                <i class="fas fa-spinner fa-spin d-none"></i> Load More Properties
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+<script>
+  document.getElementById("apply-filters").addEventListener("click", function () {
+    let location = document.getElementById("location-search").value;
+    let minPrice = document.getElementById("min-price").value;
+    let maxPrice = document.getElementById("max-price").value;
+    let areaSize = document.getElementById("area-size").value;
+
+    let url = `{% url 'find_land' %}?location=${location}&min_price=${minPrice}&max_price=${maxPrice}&area_size=${areaSize}`;
+    window.location.href = url;  // Refresh the page with filters applied
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{% static 'js/locations.js' %}"></script>
+<script src="{% static 'js/map.js' %}"></script>
+<script src="{% static 'js/properties.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const map = L.map('map').setView([27.7172, 85.3240], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    async function fetchProperties() {
+      const location = document.getElementById('location-search').value;
+      const minPrice = document.getElementById('min-price').value;
+      const maxPrice = document.getElementById('max-price').value;
+      const areaSize = document.getElementById('area-size').value;
+
+      const url = new URL('/buyer/find_land/', window.location.origin);
+      const params = { location, min_price: minPrice, max_price: maxPrice, area_size: areaSize };
+
+      Object.keys(params).forEach(key => params[key] && url.searchParams.append(key, params[key]));
+
+      try {
+        const response = await fetch(url);
+        const properties = await response.json();
+        map.eachLayer(function (layer) {
+          if (layer instanceof L.Marker) {
+            map.removeLayer(layer);
+          }
+        });
+
+        properties.forEach(property => {
+          if (property.latitude && property.longitude) {
+            L.marker([property.latitude, property.longitude]).addTo(map)
+              .bindPopup(`
+                <strong>${property.title}</strong><br>
+                ${property.description}<br>
+                <strong>Price:</strong> NPR ${property.price}<br>
+                <strong>Size:</strong> ${property.size} square meters
+              `).openPopup();
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+      }
+    }
+
+    fetchProperties();
+  });
+</script>

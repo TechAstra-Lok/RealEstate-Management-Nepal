@@ -6,62 +6,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}HamroGhajagga - Nepal's Premium Land Platform{% endblock %}</title>
-
   <link rel="stylesheet" href="{% static 'styles/main.css' %}" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
-  
-  <!-- Pass the Django URL to JavaScript -->
   <script>
-  window.dashboardUrl = "{% url 'dashboard:dashboard' %}";
-    window.propertiesUrl = "{% url 'find_land' %}";
-    window.userAuthenticated = "{{ user.is_authenticated|yesno:'true,false' }}";    // Detect user authentication status
+    window.userRole = "{{ user.role|default:'' }}"; 
+    window.userAuthenticated = "{{ user.is_authenticated|yesno:'true,false' }}"; 
   </script>
 </head>
 <body>
   <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-  <div class="container">
-    <a class="navbar-brand" href="{% url 'home' %}">
-      <i class="fas fa-landmark bounce"></i> HamroGhajagga
-    </a>
-    <div class="navbar-nav ms-auto">
-      {% if user.is_authenticated %}
-        <!-- Authenticated User Links -->
-        <a class="nav-link pulse" href="{% url 'dashboard' %}">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
-        </a>
-        <a class="nav-link pulse" href="{% url 'find_land' %}">
-          <i class="fas fa-search"></i> Find Land
-        </a>
-        <a class="nav-link pulse" href="{% url 'sell_land' %}">
-          <i class="fas fa-sellcast"></i> Sell Land
-        </a>
-        <a class="nav-link pulse" href="{% url 'wishlist' %}">
-          <i class="fas fa-heart"></i> Wishlist
-        </a>
-        <a class="nav-link pulse" href="{% url 'logout' %}">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
-      {% else %}
-        <!-- Unauthenticated User Links -->
-        <a class="nav-link pulse" href="{% url 'login' %}" data-bs-toggle="modal" data-bs-target="#loginModal">
-          <i class="fas fa-sign-in-alt"></i> Login
-        </a>
-        <a class="nav-link pulse" href="{% url 'register' %}" data-bs-toggle="modal" data-bs-target="#registerModal">
-          <i class="fas fa-user-plus"></i> Register
-        </a>
-      {% endif %}
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="{% url 'home:home' %}"><i class="fas fa-landmark"></i> HamroGhajagga</a>
+      <div class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
+          {% if user.role == "buyer" %}
+            <a class="nav-link pulse" href="{% url 'buyer:find_land' %}"><i class="fas fa-search"></i> Find Land</a>
+            <a class="nav-link pulse" href="{% url 'buyer:wishlist' %}"><i class="fas fa-heart"></i> Wishlist</a>
+            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          {% elif user.role == "seller" %}
+            <a class="nav-link pulse" href="{% url 'seller:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a class="nav-link pulse" href="{% url 'seller:sell' %}"><i class="fas fa-sellcast"></i> Sell Land</a>
+            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          {% endif %}
+        {% else %}
+          <a class="nav-link pulse" href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a>
+          <a class="nav-link pulse" href="{% url 'home:register' %}" data-bs-toggle="modal" data-bs-target="#registerModal"><i class="fas fa-user-plus"></i> Register</a>
+        {% endif %}
+      </div>
     </div>
-  </div>
-</nav>
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+  </nav>
   <!-- Main content -->
-  {% block content %}
-  {% endblock %}
+  {% block content %}{% endblock %}
 
   <!-- Footer Section -->
   <footer class="footer">
@@ -79,10 +60,10 @@
         <div class="col-md-4">
           <h5>Quick Links</h5>
           <ul class="footer-links">
-            <li><a href="{% url 'about' %}">About Us</a></li>
-            <li><a href="{% url 'terms' %}">Terms &amp; Conditions</a></li>
-            <li><a href="{% url 'privacy' %}">Privacy Policy</a></li>
-            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+            <li><a href="{% url 'home:about' %}">About Us</a></li>
+            <li><a href="{% url 'home:terms' %}">Terms &amp; Conditions</a></li>
+            <li><a href="{% url 'home:privacy' %}">Privacy Policy</a></li>
+            <li><a href="{% url 'home:contact' %}">Contact Us</a></li>            
           </ul>
         </div>
         <div class="col-md-4">
@@ -105,29 +86,47 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
   <script src="{% static 'js/locations.js' %}"></script>
-  <script src="{% static 'js/main.js' %}"></script>
+  <script src="{% static 'js/main.js' %}?v={{ now|date:'U' }}"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
 
   <script>
-    // Use JavaScript to show links based on user authentication status
-    const authLinks = document.getElementById('auth-links');
-    if (window.userAuthenticated === "true") {
-      authLinks.innerHTML = `
-        <a class="nav-link pulse" href="${window.dashboardUrl}">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
-        </a>
-        
-      `;
-    } else {
-      authLinks.innerHTML = `
-        <a class="nav-link pulse" href="{% url 'login' %}" data-bs-toggle="modal" data-bs-target="#loginModal">
-          <i class="fas fa-sign-in-alt"></i> Login
-        </a>
-        <a class="nav-link pulse" href="{% url 'register' %}" data-bs-toggle="modal" data-bs-target="#registerModal">
-          <i class="fas fa-user-plus"></i> Register
-        </a>
-      `;
-    }
+
+fetch("{% url 'home:register' %}", {
+  method: "POST",
+  headers: {
+    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value // Include CSRF token
+  },
+  body: formData,
+})
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const userRole = window.userRole;
+      const authLinks = document.querySelector(".navbar-nav");
+
+      if (window.userAuthenticated === "true") {
+        if (userRole === "buyer") {
+          authLinks.innerHTML = `
+            <a class="nav-link pulse" href="{% url 'buyer:find_land' %}"><i class="fas fa-search"></i> Find Land</a>
+            <a class="nav-link pulse" href="{% url 'buyer:wishlist' %}"><i class="fas fa-heart"></i> Wishlist</a>
+            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          `;
+        } else if (userRole === "seller") {
+          authLinks.innerHTML = `
+            <a class="nav-link pulse" href="{% url 'seller:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a class="nav-link pulse" href="{% url 'seller:sell' %}"><i class="fas fa-sellcast"></i> Sell Land</a>
+            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          `;
+        }
+      } else {
+        authLinks.innerHTML = `
+          <a class="nav-link pulse" href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a>
+          <a class="nav-link pulse" href="{% url 'home:register' %}" data-bs-toggle="modal" data-bs-target="#registerModal"><i class="fas fa-user-plus"></i> Register</a>
+        `;
+      }
+    });
   </script>
-  
+
 </body>
 </html>

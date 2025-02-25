@@ -1,28 +1,58 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import CustomUser
+from django.contrib.auth import authenticate
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from .models import CustomUser
 
 class RegisterForm(UserCreationForm):
     full_name = forms.CharField(max_length=255, required=True)
     email = forms.EmailField(required=True)
-    phone_number = forms.CharField(max_length=15, required=True)
-    address = forms.CharField(widget=forms.Textarea, required=True)
-    register_as = forms.ChoiceField(choices=CustomUser.REGISTER_AS_CHOICES)
+    phone_number = forms.CharField(max_length=15, required=False)
+    municipality = forms.CharField(max_length=255, required=False)
+    district = forms.CharField(max_length=255, required=False)
+    role = forms.ChoiceField(choices=CustomUser.ROLE_CHOICES, required=True)
+    payment_method = forms.ChoiceField(choices=[('esewa', 'eSewa'), ('khalti', 'Khalti')], required=True)
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'full_name', 'email', 'phone_number', 'address', 'register_as', 'password1', 'password2']
+        fields = ["email", "full_name", "phone_number", "municipality", "district", "role", "payment_method"]
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError("Email is already registered!")
+        return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.first_name = self.cleaned_data['full_name']
-        user.phone_number = self.cleaned_data['phone_number']
-        user.address = self.cleaned_data['address']
-        user.register_as = self.cleaned_data['register_as']
+        user.email = self.cleaned_data["email"]
+        user.full_name = self.cleaned_data["full_name"]
+        user.phone_number = self.cleaned_data["phone_number"]
+        user.municipality = self.cleaned_data["municipality"]
+        user.district = self.cleaned_data["district"]
+        user.role = self.cleaned_data["role"]
         if commit:
+            user.set_password(self.cleaned_data["password1"])  
             user.save()
         return user
 
-class LoginForm(AuthenticationForm):
-    username = forms.EmailField(required=True)
+
+class LoginForm(forms.Form):
+    email = forms.EmailField(label="Email", required=True)
+    password2 = forms.CharField(widget=forms.PasswordInput(), label="Password", required=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get("email")
+        password = cleaned_data.get("password2")
+
+        # Authenticate using email and password
+        if email and password:
+            user = authenticate(username=email, password=password)
+            if user is None:
+                raise forms.ValidationError("Invalid email or password")
+            cleaned_data["user"] = user
+
+        return cleaned_data

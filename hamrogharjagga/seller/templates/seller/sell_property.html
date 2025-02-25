@@ -1,0 +1,222 @@
+{% extends "home/base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="sell-container">
+    <div class="container">
+      <div class="page-header">
+        <h1><i class="fas fa-plus-circle"></i> List Your Land</h1>
+        <p>Fill out the form below to list your land property on HamroGhajagga</p>
+      </div>
+
+      <div class="listing-form">
+        <form id="property-form" class="needs-validation" novalidate="">
+          {% csrf_token %}
+          
+          <!-- Basic Information -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+            <div class="row g-3">
+              <div class="col-md-12">
+                <label class="form-label">Land Title*</label>
+                <input type="text" class="form-control" required placeholder="e.g., Residential Land in Budhanilkantha" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Land Type*</label>
+                <select class="form-select" required>
+                  <option value="">Select Type</option>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="agricultural">Agricultural</option>
+                  <option value="industrial">Industrial</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Road Access*</label>
+                <select class="form-select" required>
+                  <option value="">Select Road Type</option>
+                  <option value="pitched">Pitched Road</option>
+                  <option value="gravel">Gravel Road</option>
+                  <option value="soil">Soil Road</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Details -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-map-marker-alt"></i> Location Details</h3>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Province*</label>
+                <select class="form-select" id="province-select" required>
+                  <option value="">Select Province</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">District*</label>
+                <select class="form-select" id="district-select" required>
+                  <option value="">Select District</option>
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Municipality/VDC*</label>
+                <select class="form-select" id="municipality-select" required>
+                  <option value="">Select Municipality/VDC</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Ward No.*</label>
+                <input type="number" class="form-control" required min="1" max="33" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Tole/Street</label>
+                <input type="text" class="form-control" placeholder="e.g., Chabahil" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label">Map Location*</label>
+                <div id="map" style="height: 300px;" class="form-map"></div>
+                <small class="text-muted">Click on the map to set property location</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Area and Price -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-ruler-combined"></i> Area and Price Details</h3>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Land Area*</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" required min="0" step="0.01" />
+                  <select class="form-select" style="max-width: 120px">
+                    <option value="ropani">Ropani</option>
+                    <option value="bigha">Bigha</option>
+                    <option value="kattha">Kattha</option>
+                    <option value="dhur">Dhur</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Price (NPR)*</label>
+                <div class="input-group">
+                  <span class="input-group-text">Rs.</span>
+                  <input type="number" class="form-control" required min="0" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features and Amenities -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-list-check"></i> Features and Amenities</h3>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="feature-grid">
+                  <div class="feature-item">
+                    <input type="checkbox" class="btn-check" id="electricity" />
+                    <label class="btn btn-outline-primary" for="electricity">
+                      <i class="fas fa-bolt"></i> Electricity
+                    </label>
+                  </div>
+                  <div class="feature-item">
+                    <input type="checkbox" class="btn-check" id="water" />
+                    <label class="btn btn-outline-primary" for="water">
+                      <i class="fas fa-water"></i> Water Supply
+                    </label>
+                  </div>
+                  <div class="feature-item">
+                    <input type="checkbox" class="btn-check" id="boundary" />
+                    <label class="btn btn-outline-primary" for="boundary">
+                      <i class="fas fa-border-all"></i> Boundary Wall
+                    </label>
+                  </div>
+                  <div class="feature-item">
+                    <input type="checkbox" class="btn-check" id="garden" />
+                    <label class="btn btn-outline-primary" for="garden">
+                      <i class="fas fa-tree"></i> Garden Space
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Images and Documents -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-images"></i> Images and Documents</h3>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="dropzone" id="property-images"></div>
+                <small class="text-muted">Upload clear images of your property (Max 10 images)</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-pen"></i> Description</h3>
+            <div class="row g-3">
+              <div class="col-12">
+                <textarea class="form-control" rows="5" placeholder="Provide detailed description of your property..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="form-section glass-effect animate-up">
+            <h3><i class="fas fa-address-card"></i> Contact Information</h3>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Name*</label>
+                <input type="text" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Phone*</label>
+                <input type="tel" class="form-control" required pattern="[0-9]{10}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Best Time to Contact</label>
+                <select class="form-select">
+                  <option value="anytime">Anytime</option>
+                  <option value="morning">Morning (6 AM - 12 PM)</option>
+                  <option value="afternoon">Afternoon (12 PM - 5 PM)</option>
+                  <option value="evening">Evening (5 PM - 9 PM)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-lg pulse-button">
+              <i class="fas fa-paper-plane"></i> Submit Listing
+            </button>
+            <button type="reset" class="btn btn-outline-secondary btn-lg">
+              <i class="fas fa-undo"></i> Reset Form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- External JS and CSS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+  <script src="{% static 'js/locations.js' %}"></script>
+  <script src="{% static 'js/sell.js' %}"></script>
+{% endblock %}
