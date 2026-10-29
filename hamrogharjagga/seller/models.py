@@ -1,7 +1,7 @@
 import builtins
 from django.db import models
 from home.models import CustomUser, Inquiry
-from django.core.exceptions import ValidationError
+
 
 class Property(models.Model):
     PROPERTY_TYPE = [
@@ -32,35 +32,47 @@ class Property(models.Model):
         ('dhur', 'Dhur'),
     ]
 
-    owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='properties')
+    owner = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='properties'
+    )
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
-    
+
     title = models.CharField(max_length=200)
     property_type = models.CharField(max_length=20, choices=PROPERTY_TYPE)
     description = models.TextField()
 
-    latitude = models.FloatField(default=27.7172)  
-    longitude = models.FloatField(default=85.3240) 
+    latitude = models.FloatField(default=27.7172)
+    longitude = models.FloatField(default=85.3240)
     province = models.CharField(max_length=255, default='Bagmati')
     district = models.CharField(max_length=100, default='Kathmandu')
     municipality = models.CharField(max_length=255, default='Kathmandu')
     ward = models.CharField(max_length=10, default='1')
     tole = models.CharField(max_length=255, blank=True, null=True)
-    
-    road_access = models.CharField(max_length=100, choices=ROAD_ACCESS, default='pitched')
+
+    road_access = models.CharField(
+        max_length=100, choices=ROAD_ACCESS, default='pitched'
+    )
     price = models.DecimalField(max_digits=12, decimal_places=2)
     size = models.DecimalField(max_digits=8, decimal_places=2)
-    size_unit = models.CharField(max_length=10, choices=SIZE_UNIT, default='dhur')
+    size_unit = models.CharField(
+        max_length=10, choices=SIZE_UNIT, default='dhur'
+    )
     available_from = models.DateField(auto_now_add=True, null=True, blank=True)
-    
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
+
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default='available'
+    )
     verified = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    best_time_to_contact = models.CharField(max_length=100, choices=CONTACT_TIME, default='morning')
+    best_time_to_contact = models.CharField(
+        max_length=100, choices=CONTACT_TIME, default='morning'
+    )
     views = models.PositiveIntegerField(default=0)
-    inquiries = models.ManyToManyField(Inquiry, related_name='properties', blank=True)
+    inquiries = models.ManyToManyField(
+        Inquiry, related_name='properties', blank=True
+    )
     features = models.ManyToManyField('Feature', blank=True)
 
     class Meta:
@@ -71,12 +83,22 @@ class Property(models.Model):
 
     @property
     def location(self):
-        parts = [self.tole, f"Ward {self.ward}" if self.ward else None, self.municipality, self.district, self.province]
-        return ", ".join([str(p).strip() for p in parts if p and str(p).strip()])
+        parts = [
+            self.tole,
+            f"Ward {self.ward}" if self.ward else None,
+            self.municipality,
+            self.district,
+            self.province
+        ]
+        return ", ".join(
+            [str(p).strip() for p in parts if p and str(p).strip()]
+        )
 
     @property
     def main_image(self):
-        first_media = self.media.filter(media_image__isnull=False).exclude(media_image='').first()
+        first_media = self.media.filter(
+            media_image__isnull=False
+        ).exclude(media_image='').first()
         if first_media and first_media.media_image:
             try:
                 return first_media.media_image.url
@@ -86,9 +108,15 @@ class Property(models.Model):
 
 
 class PropertyMedia(models.Model):
-    property = models.ForeignKey(Property, related_name='media', on_delete=models.CASCADE)
-    media_image = models.ImageField(upload_to='property_images/', blank=True, null=True)
-    media_video = models.FileField(upload_to='property_videos/', blank=True, null=True)
+    property = models.ForeignKey(
+        Property, related_name='media', on_delete=models.CASCADE
+    )
+    media_image = models.ImageField(
+        upload_to='property_images/', blank=True, null=True
+    )
+    media_video = models.FileField(
+        upload_to='property_videos/', blank=True, null=True
+    )
 
     @builtins.property
     def image(self):
@@ -104,7 +132,7 @@ class PropertyMedia(models.Model):
 
 class Feature(models.Model):
     name = models.CharField(max_length=255)
-    
+
     def __str__(self):
         return self.name
 
@@ -135,4 +163,5 @@ class Activity(models.Model):
 
     def __str__(self):
         user_str = self.user.full_name or self.user.email
-        return f"Activity by {user_str} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+        formatted_time = self.timestamp.strftime('%Y-%m-%d %H:%M')
+        return f"Activity by {user_str} on {formatted_time}"

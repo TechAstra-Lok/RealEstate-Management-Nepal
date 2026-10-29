@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate
 from .models import CustomUser
 
+
 class RegisterForm(UserCreationForm):
     full_name = forms.CharField(max_length=255, required=True)
     email = forms.EmailField(required=True)
@@ -11,20 +12,29 @@ class RegisterForm(UserCreationForm):
     district = forms.CharField(max_length=255, required=False)
     role = forms.ChoiceField(choices=CustomUser.ROLE_CHOICES, required=True)
     payment_method = forms.ChoiceField(
-        choices=[('esewa', 'eSewa'), ('khalti', 'Khalti'), ('paypal', 'PayPal')],
+        choices=[
+            ('esewa', 'eSewa'),
+            ('khalti', 'Khalti'),
+            ('paypal', 'PayPal')
+        ],
         required=False
     )
 
     class Meta:
         model = CustomUser
-        fields = ["email", "full_name", "phone_number", "municipality", "district", "role", "payment_method"]
+        fields = [
+            "email", "full_name", "phone_number",
+            "municipality", "district", "role", "payment_method"
+        ]
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
         if email:
             email = email.lower().strip()
             if CustomUser.objects.filter(email__iexact=email).exists():
-                raise forms.ValidationError("An account with this email already exists.")
+                raise forms.ValidationError(
+                    "An account with this email already exists."
+                )
         return email
 
     def save(self, commit=True):
@@ -46,13 +56,20 @@ class RegisterForm(UserCreationForm):
 
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Email", required=True)
-    password = forms.CharField(widget=forms.PasswordInput(), label="Password", required=False)
-    password2 = forms.CharField(widget=forms.PasswordInput(), label="Password", required=False)
+    password = forms.CharField(
+        widget=forms.PasswordInput(), label="Password", required=False
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(), label="Password", required=False
+    )
 
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get("email")
-        password = cleaned_data.get("password") or cleaned_data.get("password2")
+        password = (
+            cleaned_data.get("password") or
+            cleaned_data.get("password2")
+        )
 
         if not email:
             raise forms.ValidationError("Email is required.")

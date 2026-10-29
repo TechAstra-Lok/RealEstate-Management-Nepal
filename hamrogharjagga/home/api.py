@@ -9,9 +9,8 @@ from buyer.utils import convert_to_square_meters
 
 def api_properties(request):
     """
-    Asynchronous JSON endpoint returning real-time property listings and map markers.
-    Supports filtering by location (province, district, municipality), price, area size with unit conversion,
-    property type, road access, and sorting.
+    Asynchronous JSON endpoint returning real-time property listings and map.
+    Supports filtering by location, price, area size, type, road, and sorting.
     """
     properties = Property.objects.filter(status__iexact="available")
 
@@ -39,11 +38,17 @@ def api_properties(request):
     if municipality:
         properties = properties.filter(municipality__icontains=municipality)
 
-    prop_type = request.GET.get('type') or request.GET.get('property_type', '').strip()
+    prop_type = (
+        request.GET.get('type') or
+        request.GET.get('property_type', '').strip()
+    )
     if prop_type:
         properties = properties.filter(property_type__iexact=prop_type)
 
-    road = request.GET.get('road') or request.GET.get('road_access', '').strip()
+    road = (
+        request.GET.get('road') or
+        request.GET.get('road_access', '').strip()
+    )
     if road:
         properties = properties.filter(road_access__iexact=road)
 
@@ -113,10 +118,13 @@ def api_properties(request):
 @require_http_methods(["POST"])
 def api_submit_inquiry(request):
     """
-    Submits a buyer inquiry for a property and generates a notification for the seller.
+    Submits a buyer inquiry for a property and generates notifications.
     """
     if not request.user.is_authenticated:
-        return JsonResponse({'status': 'error', 'message': 'Authentication required. Please login first.'}, status=401)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Authentication required. Please login first.'
+        }, status=401)
 
     try:
         data = json.loads(request.body.decode('utf-8'))
@@ -127,12 +135,18 @@ def api_submit_inquiry(request):
     message = str(data.get('message', '')).strip()
 
     if not property_id or not message:
-        return JsonResponse({'status': 'error', 'message': 'Property ID and inquiry message are required.'}, status=400)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Property ID and inquiry message are required.'
+        }, status=400)
 
     try:
         property_obj = Property.objects.get(id=property_id)
     except Property.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Property not found.'}, status=404)
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Property not found.'
+        }, status=404)
 
     inquiry = Inquiry.objects.create(
         user=request.user,
@@ -140,17 +154,14 @@ def api_submit_inquiry(request):
         message=message
     )
 
-    # Associate with property ManyToMany relationship as well
     property_obj.inquiries.add(inquiry)
 
-    # Real-time notification for the owner
     sender_name = request.user.full_name or request.user.email
     Notification.objects.create(
         user=property_obj.owner,
         message=f"New inquiry from {sender_name} on '{property_obj.title}'"
     )
 
-    # Log user activity
     Activity.objects.create(
         user=request.user,
         message=f"Sent inquiry on property '{property_obj.title}'"
@@ -168,7 +179,9 @@ def api_live_stats(request):
     Returns platform-wide live metrics.
     """
     return JsonResponse({
-        'total_properties': Property.objects.filter(status__iexact='available').count(),
+        'total_properties': Property.objects.filter(
+            status__iexact='available'
+        ).count(),
         'total_inquiries': Inquiry.objects.count(),
         'total_users': CustomUser.objects.count(),
     })

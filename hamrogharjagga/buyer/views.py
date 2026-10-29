@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from seller.models import Property
 from .models import Wishlist
-from .utils import convert_to_square_meters 
+from .utils import convert_to_square_meters
 
 
 def property_list(request):
@@ -16,7 +16,7 @@ def property_list(request):
 
 @login_required
 def find_land(request):
-    user = request.user 
+    user = request.user
     if getattr(user, 'role', '') == "seller":
         return redirect("seller:dashboard")
 
@@ -58,7 +58,7 @@ def find_land(request):
         except (ValueError, TypeError):
             pass
 
-    # Apply accurate land area size filter converted to square meters
+    # Apply land area size filter converted to square meters
     if area_size:
         try:
             target_sqm = convert_to_square_meters(float(area_size), area_unit)
@@ -115,26 +115,41 @@ def find_land(request):
 
 @login_required
 def wishlist(request):
-    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('property').order_by('-created_at')
-    return render(request, "buyer/wishlist.html", {'wishlist_items': wishlist_items})
+    wishlist_items = Wishlist.objects.filter(
+        user=request.user
+    ).select_related('property').order_by('-created_at')
+    return render(
+        request, "buyer/wishlist.html", {'wishlist_items': wishlist_items}
+    )
 
 
 @login_required
 def add_to_wishlist(request, property_id):
     user = request.user
     property_obj = get_object_or_404(Property, id=property_id)
-    wishlist_item, created = Wishlist.objects.get_or_create(user=user, property=property_obj)
+    wishlist_item, created = Wishlist.objects.get_or_create(
+        user=user, property=property_obj
+    )
+    if created:
+        msg = "Property added to your wishlist!"
+    else:
+        msg = "Property is already in your wishlist."
     return JsonResponse({
         "status": "success",
         "created": created,
-        "message": "Property added to your wishlist!" if created else "Property is already in your wishlist."
+        "message": msg
     })
 
 
 @login_required
 def remove_from_wishlist(request, wishlist_id):
-    wishlist_item = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
+    wishlist_item = get_object_or_404(
+        Wishlist, id=wishlist_id, user=request.user
+    )
     wishlist_item.delete()
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'status': 'success', 'message': 'Removed from wishlist.'})
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Removed from wishlist.'
+        })
     return redirect("buyer:wishlist")
