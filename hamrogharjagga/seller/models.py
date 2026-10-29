@@ -93,7 +93,7 @@ class Property(models.Model):
             self.province
         ]
         return ", ".join(
-            [str(p).strip() for p in parts if p and str(p).strip()]
+            [p.strip() for p in parts if p and p.strip()]
         )
 
     @property
