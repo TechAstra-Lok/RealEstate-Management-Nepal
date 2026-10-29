@@ -14,12 +14,14 @@
             <label for="loginEmail" class="form-label">Email</label>
             <input type="email" id="loginEmail" name="email" class="form-control" required placeholder="Enter your email" />
           </div>
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
-          <div class="input-group">
-            <input type="password" class="password-field form-control" name="password2" required placeholder="Confirm your password" />
-            <button type="button" class="btn btn-outline-primary toggle-password">
-              <i class="bi bi-eye"></i> 
-            </button>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label">Password</label>
+            <div class="input-group">
+              <input type="password" id="loginPassword" class="password-field form-control" name="password2" required placeholder="Enter your password" />
+              <button type="button" class="btn btn-outline-primary toggle-password">
+                <i class="bi bi-eye"></i> 
+              </button>
+            </div>
           </div>
           <button type="submit" class="btn btn-primary w-100">Login</button>
         </form>
@@ -74,12 +76,12 @@
             <label for="phoneNumber" class="form-label">Phone Number</label>
             <input type="text" id="phoneNumber" name="phone_number" class="form-control" required placeholder="Your phone number" />
           </div>
-          <div class="d-flex justify-content-between mb-3">
-            <div>
+          <div class="d-flex justify-content-between mb-3 gap-2">
+            <div class="w-50">
               <label for="municipality" class="form-label">Municipality</label>
               <input type="text" id="municipality" name="municipality" class="form-control" required placeholder="Municipality" />
             </div>
-            <div>
+            <div class="w-50">
               <label for="district" class="form-label">District</label>
               <input type="text" id="district" name="district" class="form-control" required placeholder="District" />
             </div>
@@ -89,7 +91,7 @@
             <div class="d-flex flex-column align-items-start">
               <h5>Select Your Role</h5>
               <div class="form-check">
-                <input class="form-check-input" type="radio" name="role" id="buyer" value="buyer" required>
+                <input class="form-check-input" type="radio" name="role" id="buyer" value="buyer" checked required>
                 <label class="form-check-label" for="buyer">Buyer</label>
               </div>
               <div class="form-check">
@@ -100,11 +102,12 @@
           
             <!-- Payment Selection -->
             <div class="d-flex flex-column align-items-start">
-              <h5>Payment</h5>
+              <h5>Payment Method</h5>
               <div class="form-group">
                 <select class="form-control" name="payment_method" required>
-                  <option value="paypal">PayPal</option>
                   <option value="esewa">eSewa</option>
+                  <option value="khalti">Khalti</option>
+                  <option value="paypal">PayPal</option>
                 </select>
               </div>
             </div>
@@ -122,7 +125,6 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
   $(document).ready(function(){
-    var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
     var registerUrl = "{% url 'home:register' %}";
     var loginUrl = "{% url 'home:login' %}";
 
@@ -149,27 +151,24 @@
         data: formData,
         success: function(response) {
           if (response.status === "success") {
-            alert(response.message); // Display success message
+            alert(response.message); 
             $("#registerModal").modal("hide");
-            $("#loginModal").modal("show"); // Show login modal after successful registration
+            $("#loginModal").modal("show");
           } else {
-            alert(response.message); // Display error message
+            alert(response.message); 
           }
         },
         error: function(xhr, status, error) {
           console.error("Error:", error);
-          alert("An error occurred. Please try again.");
+          alert("An error occurred during registration. Please try again.");
         }
       });
     });
 
-    
     // Handle login form submission 
     $("#loginForm").on("submit", function(event) {
       event.preventDefault();
       var formData = $(this).serialize();
-        
-      console.log('formData:', formData);
 
       $.ajax({
         type: "POST",
@@ -177,15 +176,19 @@
         data: formData,
         success: function(response) {
           if (response.status === "success") {
-            alert(response.message); // Display success message
-            window.location.reload(); // Reload the page after successful login
+            alert(response.message);
+            if (response.redirect_url) {
+              window.location.href = response.redirect_url;
+            } else {
+              window.location.reload();
+            }
           } else {
-            alert(response.message); // Display error message
+            alert(response.message); 
           }
         },
         error: function(xhr, status, error) {
           console.error("Error:", error);
-          alert("An error occurred. Please try again.");
+          alert("An error occurred during login. Please try again.");
         }
       });
     });

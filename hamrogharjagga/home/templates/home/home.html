@@ -1,252 +1,230 @@
 {% extends "home/base.html" %}
-{% include 'home/modals.html' %}
-{%load static%}
-{% block title %}HamroGhajagga{% endblock %}
+{% load static %}
 
-<style>
-  .featured-section {
-    padding: 40px 0;
-    background-color: #f9f9f9;
-  }
-
-  .featured-section h2 {
-    font-size: 36px;
-    font-weight: bold;
-    margin-bottom: 30px;
-    color: #333;
-  }
-
-  .featured-section .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    justify-content: center;
-  }
-
-  .property-card {
-    position: relative;
-    background-color: white;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-  }
-
-  .property-image {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-  }
-
-  .property-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .property-card:hover .property-image img {
-    transform: scale(1.1);
-  }
-
-  .property-type, .verified-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    padding: 5px 10px;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    font-size: 14px;
-    border-radius: 5px;
-  }
-
-  .verified-badge {
-    top: 15px;
-    right: 15px;
-  }
-
-  .card-body {
-    padding: 20px;
-    flex-grow: 1;
-  }
-
-  .card-body h5 {
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 15px;
-  }
-
-  .price {
-    font-size: 18px;
-    font-weight: bold;
-    color: #e74c3c;
-    margin-bottom: 10px;
-  }
-
-  .property-details, .location {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 10px;
-  }
-
-  .property-features {
-    margin-bottom: 15px;
-  }
-
-  .feature-tag {
-    display: inline-block;
-    background-color: #e74c3c;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    margin-right: 5px;
-  }
-
-  .btn-primary {
-    background-color: #3498db;
-    border-color: #3498db;
-    padding: 10px;
-    font-size: 16px;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-
-  .btn-primary:hover {
-    background-color: #2980b9;
-  }
-
-  /* Responsive styles */
-  @media (max-width: 768px) {
-    .property-card {
-      width: 100%;
-    }
-  }
-
-</style>
+{% block title %}HamroGhajagga - Nepal's Premier Real Estate Marketplace{% endblock %}
 
 {% block content %}
-  <div class="hero-section parallax">
-    <div class="hero-content">
-      <h1 class="animate-text">Find Your Perfect Land in Nepal</h1>
-      <p class="hero-subtitle animate-text-delay">Your Trusted Platform for Land Properties</p>
-      <div class="search-box glass-effect animate-up">
-        <div class="search-input">
-          <i class="fas fa-map-marker-alt"></i>
-          <select class="form-control" id="location-search" style="width: 100%"><option></option></select>
-        </div>
+<style>
+  .hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.65)), url("{% static 'assets/images/hero-bg.jpg' %}") center/cover no-repeat;
+    min-height: 550px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    padding: 60px 15px;
+  }
+  .search-box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    max-width: 900px;
+    margin: 30px auto 0;
+    color: #333;
+  }
+  .featured-section {
+    padding: 60px 0;
+  }
+  .property-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  }
+  .property-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  }
+  .stats-section {
+    background: #0d6efd;
+    color: white;
+    padding: 50px 0;
+  }
+</style>
 
-        <div class="search-input">
-          <i class="fas fa-ruler-combined"></i>
-          <div class="d-flex gap-2">
-            <input type="number" id="land-size" class="form-control" placeholder="Size" />
-            <select id="area-unit" class="form-select">
-              <option value="ropani">Ropani</option><option value="dhur">Dhur</option><option value="kattha">Kattha</option><option value="bigha">Bigha</option>
+<div class="hero-section">
+  <div class="container">
+    <h1 class="display-4 fw-bold">Find Your Perfect Land in Nepal</h1>
+    <p class="lead">Search verified residential, agricultural, and commercial plots across all 7 provinces.</p>
+    
+    <div class="search-box">
+      <form method="GET" action="{% url 'buyer:find_land' %}" id="heroSearchForm">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-3">
+            <input type="text" name="district" class="form-control" placeholder="District (e.g. Kathmandu)" />
+          </div>
+          <div class="col-md-3">
+            <div class="input-group">
+              <input type="number" step="0.1" name="area_size" class="form-control" placeholder="Min Area" />
+              <select name="area_unit" class="form-select" style="max-width: 90px;">
+                <option value="ropani">Ropani</option>
+                <option value="bigha">Bigha</option>
+                <option value="kattha">Kattha</option>
+                <option value="dhur">Dhur</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <select name="max_price" class="form-select">
+              <option value="">Max Budget</option>
+              <option value="2000000">NPR 20 Lakhs</option>
+              <option value="5000000">NPR 50 Lakhs</option>
+              <option value="10000000">NPR 1 Crore</option>
+              <option value="20000000">NPR 2 Crore</option>
+              <option value="50000000">NPR 5 Crore</option>
             </select>
           </div>
-        </div>
-        
-        <div class="search-input">
-          <i class="fas fa-money-bill-wave"></i>
-          <div class="d-flex gap-2">
-            <select id="min-price" class="form-select">
-              <option value="">Min Price</option><option value="1000000">10 Lakhs</option><option value="2000000">20 Lakhs</option><option value="5000000">50 Lakhs</option>
-              <option value="10000000">1 Crore</option><option value="20000000">2 Crore</option><option value="50000000">5 Crore</option>
-            </select>
-            <select id="max-price" class="form-select">
-              <option value="">Max Price</option><option value="2000000">20 Lakhs</option><option value="5000000">50 Lakhs</option><option value="10000000">1 Crore</option>
-              <option value="20000000">2 Crore</option><option value="50000000">5 Crore</option><option value="100000000">10 Crore</option>
-            </select>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+              <i class="fas fa-search me-1"></i> Search Land
+            </button>
           </div>
         </div>
-        <button class="search-btn pulse-button" onclick="checkLoginStatus()"><i class="fas fa-search"></i> Search</button>
-      </div>
+      </form>
     </div>
   </div>
+</div>
 
-  <div class="stats-section">
-    <div class="container text-center">
-      <div class="row">
-        <div class="col-md-4 stat-item"><i class="fas fa-map-marked-alt"></i><h3>1000+</h3><p>Land Properties</p></div>
-        <div class="col-md-4 stat-item"><i class="fas fa-users"></i><h3>500+</h3><p>Verified Agents</p></div>
-        <div class="col-md-4 stat-item"><i class="fas fa-handshake"></i><h3>2000+</h3><p>Successful Deals</p></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="featured-section container">
-    <h2 class="text-center mb-4"><i class="fas fa-star"></i> Featured Properties</h2>
-    <div class="row">
+<!-- Stats Counter Section -->
+<div class="stats-section text-center">
+  <div class="container">
+    <div class="row g-4">
       <div class="col-md-4">
-        <div class="property-card">
-          <div class="property-image">
-            <img src="https://source.unsplash.com/800x600/?land,mountain&amp;sig=1" alt="Mountain View Land" />
-            <div class="property-type">Residential</div><div class="verified-badge"><i class="fas fa-check-circle"></i> Verified</div>
-          </iv>
-          <div class="card-body">
-            <h5>Premium Land in Budhanilkantha</h5>
-            <div class="price">NPR 1.2 Cr</div>
-            <div class="property-details"><span><i class="fas fa-ruler-combined"></i> 5 Ropani</span><span><i class="fas fa-road"></i> Pitched Road</span></div>
-            <div class="location"><i class="fas fa-map-marker-alt"></i> Budhanilkantha, Kathmandu</div>
-            <div class="property-features"><span class="feature-tag">South Facing</span><span class="feature-tag">Plain Land</span></div>
-            <button class="btn btn-primary w-100 mt-3" onclick="showLoginPrompt()">View Details</button>
+        <i class="fas fa-landmark fa-2x mb-2"></i>
+        <h2 class="fw-bold">1,000+</h2>
+        <p class="mb-0">Verified Land Listings</p>
+      </div>
+      <div class="col-md-4">
+        <i class="fas fa-users fa-2x mb-2"></i>
+        <h2 class="fw-bold">500+</h2>
+        <p class="mb-0">Active Sellers &amp; Agents</p>
+      </div>
+      <div class="col-md-4">
+        <i class="fas fa-handshake fa-2x mb-2"></i>
+        <h2 class="fw-bold">2,000+</h2>
+        <p class="mb-0">Transactions Facilitated</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Properties -->
+<div class="featured-section container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="fas fa-star text-warning me-2"></i> Featured Properties</h2>
+      <p class="text-muted mb-0">Handpicked premium lands with verified ownership in Nepal.</p>
+    </div>
+    <a href="{% url 'buyer:find_land' %}" class="btn btn-outline-primary">View All</a>
+  </div>
+
+  <div class="row g-4">
+    {% for property in featured_properties %}
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 property-card">
+          <div style="height: 200px; overflow: hidden; position: relative;">
+            <img src="{{ property.main_image }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ property.title }}">
+            <span class="badge bg-primary position-absolute top-0 start-0 m-2 text-capitalize">
+              {{ property.property_type }}
+            </span>
+            <span class="badge bg-success position-absolute top-0 end-0 m-2">
+              Verified
+            </span>
+          </div>
+          <div class="card-body d-flex flex-column">
+            <h5 class="fw-bold mb-2">{{ property.title }}</h5>
+            <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ property.location }}</p>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="h5 fw-bold text-primary mb-0">NPR {{ property.price|floatformat:0 }}</span>
+              <span class="badge bg-light text-dark border">{{ property.size }} {{ property.get_size_unit_display }}</span>
+            </div>
+            <p class="small text-muted mb-3 flex-grow-1">
+              {{ property.description|truncatewords:15 }}
+            </p>
+            <a href="{% url 'seller:property_detail' property.id %}" class="btn btn-outline-primary btn-sm w-100 mt-auto">
+              View Details
+            </a>
           </div>
         </div>
       </div>
-
-      <div class="col-md-4">
-        <div class="property-card">
-          <div class="property-image">
-            <img src="https://source.unsplash.com/800x600/?land,valley&amp;sig=2" alt="Valley View Land" />
-            <div class="property-type">Agricultural</div><div class="verified-badge"><i class="fas fa-check-circle"></i> Verified</div>
-          </div>
+    {% empty %}
+      <!-- Static Demo Cards when database has no listings yet -->
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 property-card">
+          <img src="{% static 'assets/Card1.jpg' %}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="">
           <div class="card-body">
-            <h5>Fertile Land in Bhaktapur</h5>
-            <div class="price">NPR 85 Lakhs</div>
-            <div class="property-details"><span><i class="fas fa-ruler-combined"></i> 3 Ropani</span><span><i class="fas fa-road"></i> Gravel Road</span></div>
-            <div class="location"><i class="fas fa-map-marker-alt"></i> Madhyapur Thimi, Bhaktapur</div>
-            <div class="property-features"><span class="feature-tag">Water Source</span><span class="feature-tag">Fertile Soil</span></div>
-            <button class="btn btn-primary w-100 mt-3" onclick="showLoginPrompt()">View Details</button>
+            <h5 class="fw-bold">Premium Plot in Budhanilkantha</h5>
+            <p class="text-muted small"><i class="fas fa-map-marker-alt text-danger"></i> Budhanilkantha, Kathmandu</p>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="fw-bold text-primary">NPR 1.2 Crore</span>
+              <span class="badge bg-light text-dark border">5 Ropani</span>
+            </div>
+            <a href="{% url 'buyer:find_land' %}" class="btn btn-primary btn-sm w-100">Explore Properties</a>
           </div>
         </div>
       </div>
-
-      <div class="col-md-4">
-        <div class="property-card">
-          <div class="property-image">
-            <img src="https://source.unsplash.com/800x600/?land,commercial&amp;sig=3" alt="Commercial Land" />
-            <div class="property-type">Commercial</div><div class="verified-badge"><i class="fas fa-check-circle"></i> Verified</div>
-          </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 property-card">
+          <img src="{% static 'assets/Card2.jpg' %}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="">
           <div class="card-body">
-            <h5>Prime Commercial Land in Lalitpur</h5>
-            <div class="price">NPR 2.5 Cr</div>
-            <div class="property-details"><span><i class="fas fa-ruler-combined"></i> 4 Ropani</span><span><i class="fas fa-road"></i> Pitched Road</span></div>
-            <div class="location"><i class="fas fa-map-marker-alt"></i> Patan, Lalitpur</div>
-            <div class="property-features"><span class="feature-tag">Corner Plot</span><span class="feature-tag">Highway Access</span></div>
-            <button class="btn btn-primary w-100 mt-3" onclick="showLoginPrompt()">View Details</button>
+            <h5 class="fw-bold">Fertile Agricultural Land in Bhaktapur</h5>
+            <p class="text-muted small"><i class="fas fa-map-marker-alt text-danger"></i> Madhyapur Thimi, Bhaktapur</p>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="fw-bold text-primary">NPR 85 Lakhs</span>
+              <span class="badge bg-light text-dark border">3 Ropani</span>
+            </div>
+            <a href="{% url 'buyer:find_land' %}" class="btn btn-primary btn-sm w-100">Explore Properties</a>
           </div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 property-card">
+          <img src="{% static 'assets/Card3.jpg' %}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="">
+          <div class="card-body">
+            <h5 class="fw-bold">Commercial Corner Plot in Lalitpur</h5>
+            <p class="text-muted small"><i class="fas fa-map-marker-alt text-danger"></i> Patan, Lalitpur</p>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="fw-bold text-primary">NPR 2.5 Crore</span>
+              <span class="badge bg-light text-dark border">4 Ropani</span>
+            </div>
+            <a href="{% url 'buyer:find_land' %}" class="btn btn-primary btn-sm w-100">Explore Properties</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Why Choose Us -->
+<div class="py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-4">Why Choose HamroGhajagga?</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100">
+          <i class="fas fa-check-circle fa-2x text-success mb-3"></i>
+          <h5 class="fw-bold">100% Verified Ownership</h5>
+          <p class="text-muted small mb-0">Every land listing is cross-checked to ensure genuine ownership and cadastral records.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100">
+          <i class="fas fa-map-marked-alt fa-2x text-primary mb-3"></i>
+          <h5 class="fw-bold">Interactive GIS Mapping</h5>
+          <p class="text-muted small mb-0">View precise GPS coordinates, road width, and topography using integrated OpenStreetMap.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm h-100">
+          <i class="fas fa-calculator fa-2x text-warning mb-3"></i>
+          <h5 class="fw-bold">Nepal Land Unit Converter</h5>
+          <p class="text-muted small mb-0">Seamlessly convert between Ropani, Bigha, Kattha, Dhur, and Square Meters.</p>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="why-us-section">
-    <div class="container">
-      <h2>Why Choose HamroGhajagga?</h2>
-      <div class="row">
-        <div class="col-md-4 feature-card"><i class="fas fa-check-circle"></i><h3>Verified Properties</h3><p>All listings undergo thorough verification</p></div>
-        <div class="col-md-4 feature-card"><i class="fas fa-map"></i><h3>Detailed Mapping</h3><p>Precise location and land details</p></div>
-        <div class="col-md-4 feature-card"><i class="fas fa-shield-alt"></i><h3>Secure Platform</h3><p>Safe and transparent transactions</p></div>
-      </div>
-    </div>
-  </div>
+</div>
 {% endblock %}
-

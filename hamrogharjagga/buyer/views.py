@@ -1,73 +1,130 @@
-from django.shortcuts import render, redirect
+import json
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Property, Location
 from django.http import JsonResponse
+from seller.models import Property
+from .models import Location, Wishlist
+from .utils import convert_to_square_meters 
 
+
+def property_list(request):
+    properties = Property.objects.filter(status__iexact="available")
+    return render(request, 'buyer/properties.html', {'properties': properties})
+
+
+@login_required
 def find_land(request):
+    user = request.user 
+    if user.role != "buyer":
+        return redirect("home:home")
+
     # Retrieve filter parameters
-    location = request.GET.get('location', '')
-    min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-    area_size = request.GET.get('area_size')
+    municipality = request.GET.get('municipality', '').strip()
+    district = request.GET.get('district', '').strip()
+    province = request.GET.get('province', '').strip()
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    area_size = request.GET.get('area_size', '').strip()
+    area_unit = request.GET.get('area_unit', 'dhur')
+    property_type = request.GET.get('property_type', '').strip()
+    road_access = request.GET.get('road_access', '').strip()
     sort_option = request.GET.get('sort', 'price-asc')
 
-    # Fetch approved and available properties
-    properties = Property.objects.filter(status="Available", verified=True)
+    properties = Property.objects.filter(status__iexact="available")
 
     # Apply filters
-    if location:
-        properties = properties.filter(location__name__icontains=location)
+    if municipality:
+        properties = properties.filter(municipality__icontains=municipality)
+    if district:
+        properties = properties.filter(district__icontains=district)
+    if province:
+        properties = properties.filter(province__icontains=province)
+    if property_type:
+        properties = properties.filter(property_type__iexact=property_type)
+    if road_access:
+        properties = properties.filter(road_access__iexact=road_access)
     if min_price:
-        properties = properties.filter(price__gte=min_price)
+        try:
+            properties = properties.filter(price__gte=float(min_price))
+        except ValueError:
+            pass
     if max_price:
-        properties = properties.filter(price__lte=max_price)
+        try:
+            properties = properties.filter(price__lte=float(max_price))
+        except ValueError:
+            pass
     if area_size:
-        unit = request.GET.get('area_unit', 'square_meter')  # Default to square meter
-        area_size_in_meters = convert_to_square_meters(float(area_size), unit)
-        properties = properties.filter(size__gte=area_size_in_meters)
+        try:
+            area_size_in_meters = convert_to_square_meters(float(area_size), area_unit)
+            properties = properties.filter(size__gte=float(area_size))
+        except ValueError:
+            pass
 
-    # Sorting logic
     sort_options = {
         "price-asc": "price",
         "price-desc": "-price",
         "area-asc": "size",
         "area-desc": "-size",
+        "date-desc": "-created_at",
     }
     properties = properties.order_by(sort_options.get(sort_option, "price"))
 
-    # Check if request is AJAX (for JSON response)
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        properties_data = [
-            {
-                'title': property.title,
-                'price': property.price,
-                'latitude': property.latitude,
-                'longitude': property.longitude,
-                'description': property.description,
-                'size': property.size,
-                'location': property.location.name,  # Assuming 'name' is the location name
-            }
-            for property in properties
-        ]
-        return JsonResponse(properties_data, safe=False)
+    # Prepare JSON data for Leaflet Map
+    markers_data = []
+    for p in properties:
+        markers_data.append({
+            'id': p.id,
+            'title': p.title,
+            'price': float(p.price),
+            'size': float(p.size),
+            'size_unit': p.get_size_unit_display(),
+            'lat': p.latitude,
+            'lng': p.longitude,
+            'location': p.location,
+            'image': p.main_image,
+            'detail_url': f"/seller/property/{p.id}/"
+        })
 
-    # **Render HTML template if it's a normal request**
-    return render(request, 'buyer/properties.html', {'properties': properties})
-
-
-def convert_to_square_meters(area, unit):
-    conversion_factors = {
-        'ropani': 508.72,  # 1 Ropani = 508.72 square meters
-        'aana': 508.72 / 16,
-        'bigha': 1361.8,  # 1 Bigha = 1361.8 square meters
-        'kattha': 338.0,   # 1 Kattha = 338 square meters
+    context = {
+        'properties': properties,
+        'markers_json': json.dumps(markers_data),
+        'municipality': municipality,
+        'district': district,
+        'province': province,
+        'min_price': min_price,
+        'max_price': max_price,
+        'area_size': area_size,
+        'area_unit': area_unit,
+        'property_type': property_type,
+        'road_access': road_access,
+        'sort_option': sort_option,
     }
-    return area * conversion_factors.get(unit, 1)  # Default is square meters
-
-
-
+    return render(request, 'buyer/properties.html', context)
 
 
 @login_required
-def wishlist(request):    
-    return render(request, "buyer/wishlist.html")
+def wishlist(request):
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('property').order_by('-created_at')
+    return render(request, "buyer/wishlist.html", {'wishlist_items': wishlist_items})
+
+
+@login_required
+def add_to_wishlist(request, property_id):
+    user = request.user
+    property_obj = get_object_or_404(Property, id=property_id)
+    created = False
+    if not Wishlist.objects.filter(user=user, property=property_obj).exists():
+        Wishlist.objects.create(user=user, property=property_obj)
+        created = True
+    return JsonResponse({
+        "status": "success",
+        "created": created,
+        "message": "Property added to your wishlist!" if created else "Property is already in your wishlist."
+    })
+
+
+@login_required
+def remove_from_wishlist(request, wishlist_id):
+    wishlist_item = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
+    wishlist_item.delete()
+    return redirect("buyer:wishlist")

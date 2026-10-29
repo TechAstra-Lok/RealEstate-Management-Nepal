@@ -1,0 +1,197 @@
+{% extends "home/base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'styles/sell.css' %}" />
+
+<div class="sell-container container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      
+      <div class="page-header text-center mb-5">
+        <h1 class="fw-bold"><i class="fas fa-plus-circle text-primary"></i> List Your Land in Nepal</h1>
+        <p class="text-muted">Fill out the property details below to reach thousands of verified buyers.</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5">
+        <form id="property-form" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          
+          <!-- Basic Information -->
+          <div class="form-section mb-4 pb-4 border-bottom">
+            <h4 class="fw-bold mb-3"><i class="fas fa-info-circle text-primary me-2"></i> 1. Basic Information</h4>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="id_title">Land Title / Headline *</label>
+                {{ form.title }}
+                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_property_type">Land Type *</label>
+                {{ form.property_type }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_road_access">Road Access *</label>
+                {{ form.road_access }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Details & Interactive Map -->
+          <div class="form-section mb-4 pb-4 border-bottom">
+            <h4 class="fw-bold mb-3"><i class="fas fa-map-marker-alt text-primary me-2"></i> 2. Location & Map Coordinates</h4>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_province">Province *</label>
+                {{ form.province }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_district">District *</label>
+                {{ form.district }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_municipality">Municipality / City *</label>
+                {{ form.municipality }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_ward">Ward No. *</label>
+                {{ form.ward }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_tole">Tole / Street Name</label>
+                {{ form.tole }}
+              </div>
+
+              <!-- Lat/Long Hidden inputs -->
+              {{ form.latitude }}
+              {{ form.longitude }}
+
+              <div class="col-12 mt-3">
+                <label class="form-label fw-semibold">Pin Exact Location on Map *</label>
+                <div id="map" style="height: 350px; border-radius: 12px; border: 2px solid #dee2e6;"></div>
+                <div class="d-flex justify-content-between mt-2">
+                  <small class="text-muted"><i class="fas fa-hand-pointer"></i> Click on the map to place/move property pin.</small>
+                  <small id="coord-display" class="badge bg-secondary">Coordinates: 27.7172, 85.3240</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Area and Price -->
+          <div class="form-section mb-4 pb-4 border-bottom">
+            <h4 class="fw-bold mb-3"><i class="fas fa-ruler-combined text-primary me-2"></i> 3. Area Size & Valuation</h4>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_size">Land Area *</label>
+                {{ form.size }}
+              </div>
+              <div class="col-md-2">
+                <label class="form-label fw-semibold" for="id_size_unit">Unit *</label>
+                {{ form.size_unit }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_price">Total Price (NPR) *</label>
+                {{ form.price }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Media Uploads -->
+          <div class="form-section mb-4 pb-4 border-bottom">
+            <h4 class="fw-bold mb-3"><i class="fas fa-camera text-primary me-2"></i> 4. Property Photos & Media</h4>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_media_image">Upload Main Land Photo</label>
+                <input type="file" name="media_image" id="id_media_image" class="form-control" accept="image/*">
+                <small class="text-muted">High resolution JPG/PNG showing road and land boundary.</small>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold" for="id_media_video">Upload Drone / Land Video</label>
+                <input type="file" name="media_video" id="id_media_video" class="form-control" accept="video/*">
+                <small class="text-muted">Optional MP4 video preview of surrounding area.</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description & Contact -->
+          <div class="form-section mb-4">
+            <h4 class="fw-bold mb-3"><i class="fas fa-address-book text-primary me-2"></i> 5. Description & Contact</h4>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold" for="id_description">Detailed Land Description</label>
+                {{ form.description }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_phone_number">Contact Phone Number *</label>
+                {{ form.phone_number }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_email">Contact Email</label>
+                {{ form.email }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold" for="id_best_time_to_contact">Preferred Contact Time</label>
+                {{ form.best_time_to_contact }}
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-3 mt-4">
+            <a href="{% url 'seller:dashboard' %}" class="btn btn-outline-secondary btn-lg px-4">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg px-5 shadow">
+              <i class="fas fa-check-circle me-2"></i> Publish Listing
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const defaultLat = 27.7172;
+    const defaultLng = 85.3240;
+
+    let initialLat = parseFloat(document.getElementById('latitude').value) || defaultLat;
+    let initialLng = parseFloat(document.getElementById('longitude').value) || defaultLng;
+
+    const map = L.map('map').setView([initialLat, initialLng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
+
+    function updateCoords(lat, lng) {
+      document.getElementById('latitude').value = lat.toFixed(6);
+      document.getElementById('longitude').value = lng.toFixed(6);
+      document.getElementById('coord-display').textContent = `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    }
+
+    updateCoords(initialLat, initialLng);
+
+    map.on('click', function (e) {
+      marker.setLatLng(e.latlng);
+      updateCoords(e.latlng.lat, e.latlng.lng);
+    });
+
+    marker.on('dragend', function (e) {
+      const pos = marker.getLatLng();
+      updateCoords(pos.lat, pos.lng);
+    });
+  });
+</script>
+{% endblock %}
+

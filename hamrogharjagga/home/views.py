@@ -3,9 +3,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.urls import reverse
 from django.http import JsonResponse
-from .models import CustomUser    
+from .models import CustomUser, Inquiry, Notification
 from home.forms import RegisterForm, LoginForm
-
+from seller.models import Property
 
 
 def home_view(request):
@@ -14,72 +14,72 @@ def home_view(request):
             return redirect("seller:dashboard")
         elif request.user.role == "buyer":
             return redirect("buyer:find_land")
-        return render(request, "home/home.html")
-    else:
-        return render(request, "home/home.html") 
+    
+    featured_properties = Property.objects.filter(status__iexact="available").order_by('-views')[:6]
+    return render(request, "home/home.html", {'featured_properties': featured_properties})
 
 
 def user_register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('role') is not None
+        
         if form.is_valid():
-            password1 = form.cleaned_data["password1"]
-            password2 = form.cleaned_data["password2"]
-            
-            if password1 != password2:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': 'Passwords do not match. Please try again.'
-                })
-            
             try:
-                user = form.save(commit=False)
-                user.username = user.email  # Assuming email as username
-                user.set_password(password2)  # Hash the password
-                user.save()
-
-                return JsonResponse({
-                    'status': 'success',
-                    'message': 'Registration successful! Please log in.',
-                    'redirect_url': reverse('home:login')
-                })
+                user = form.save()
+                login(request, user)  # Automatically login upon successful registration
+                redirect_url = reverse('seller:dashboard') if user.role == 'seller' else reverse('buyer:find_land')
+                
+                if is_ajax:
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Registration successful! Welcome to HamroGhajagga.',
+                        'redirect_url': redirect_url
+                    })
+                return redirect(redirect_url)
             except Exception as e:
-                messages.error(request, "An error occurred. Please try again.")
-                return JsonResponse({'status': 'error', 'message': 'An unexpected error occurred: ' + str(e)})
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': f'Registration error: {str(e)}'})
+                messages.error(request, f"Error: {e}")
         else:
-            print(form.errors)
-            return JsonResponse({
-                'status': 'error',
-                'message': 'Registration failed. Please check the form for errors.'
-            })
+            errors = form.errors.as_text()
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': f'Validation failed: {errors}'})
+            messages.error(request, "Registration failed. Please check form errors.")
     else:
         form = RegisterForm()
-        return render(request, "home/home.html", {"form": form})
     
+    return render(request, "home/home.html", {"form": form})
+
 
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'password2' in request.POST
+        
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password2']
-            
-            # Authenticate the user
             user = authenticate(request, username=email, password=password)
+            
             if user is not None:
                 login(request, user)
-
-                # Redirect based on user role
-                if user.role == 'buyer':
-                    return redirect('buyer:find_land')  # Redirect buyer to 'find_property'
-                elif user.role == 'seller':
-                    return redirect('seller:dashboard')  # Redirect seller to 'dashboard'
-                else:
-                    return redirect('home:home')  # Default redirect if role is neither buyer nor seller
+                redirect_url = reverse('seller:dashboard') if user.role == 'seller' else reverse('buyer:find_land')
+                
+                if is_ajax:
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Login successful!',
+                        'redirect_url': redirect_url
+                    })
+                return redirect(redirect_url)
             else:
-                form.add_error('email', 'Invalid email or password')
+                if is_ajax:
+                    return JsonResponse({'status': 'error', 'message': 'Invalid email or password. Please try again.'})
+                form.add_error(None, 'Invalid email or password.')
         else:
-            print(form.errors)  # Debugging: Check form errors if any
+            if is_ajax:
+                return JsonResponse({'status': 'error', 'message': 'Please provide a valid email and password.'})
     else:
         form = LoginForm()
 
@@ -91,11 +91,18 @@ def user_logout(request):
     messages.success(request, "You have been logged out.")
     return redirect('home:home') 
 
+
 def about_view(request):
     return render(request, "about/about.html")
+
+
 def terms_view(request):
     return render(request, "terms/terms.html")
+
+
 def privacy_view(request):
     return render(request, "privacy/privacy.html")
+
+
 def contact_view(request):
     return render(request, "contact/contact.html")

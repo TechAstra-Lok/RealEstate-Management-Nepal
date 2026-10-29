@@ -1,9 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
 from django.contrib.auth import authenticate
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser
 
 class RegisterForm(UserCreationForm):
@@ -13,7 +10,10 @@ class RegisterForm(UserCreationForm):
     municipality = forms.CharField(max_length=255, required=False)
     district = forms.CharField(max_length=255, required=False)
     role = forms.ChoiceField(choices=CustomUser.ROLE_CHOICES, required=True)
-    payment_method = forms.ChoiceField(choices=[('esewa', 'eSewa'), ('khalti', 'Khalti')], required=True)
+    payment_method = forms.ChoiceField(
+        choices=[('esewa', 'eSewa'), ('khalti', 'Khalti'), ('paypal', 'PayPal')],
+        required=False
+    )
 
     class Meta:
         model = CustomUser
@@ -29,12 +29,13 @@ class RegisterForm(UserCreationForm):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
         user.full_name = self.cleaned_data["full_name"]
-        user.phone_number = self.cleaned_data["phone_number"]
-        user.municipality = self.cleaned_data["municipality"]
-        user.district = self.cleaned_data["district"]
-        user.role = self.cleaned_data["role"]
+        user.phone_number = self.cleaned_data.get("phone_number", "")
+        user.municipality = self.cleaned_data.get("municipality", "")
+        user.district = self.cleaned_data.get("district", "")
+        user.role = self.cleaned_data.get("role", "buyer")
+        user.user_type = user.role
+        user.payment_method = self.cleaned_data.get("payment_method", "esewa")
         if commit:
-            user.set_password(self.cleaned_data["password1"])  
             user.save()
         return user
 
@@ -48,7 +49,6 @@ class LoginForm(forms.Form):
         email = cleaned_data.get("email")
         password = cleaned_data.get("password2")
 
-        # Authenticate using email and password
         if email and password:
             user = authenticate(username=email, password=password)
             if user is None:

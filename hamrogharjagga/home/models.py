@@ -40,12 +40,13 @@ class CustomUser(AbstractUser):
     municipality = models.CharField(max_length=255, blank=True, null=True)
     district = models.CharField(max_length=255, blank=True, null=True)
     user_type = models.CharField(max_length=10, choices=ROLE_CHOICES, default='buyer')
+    payment_method = models.CharField(max_length=20, blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 
     # Set email as the unique identifier (username) instead of username
     USERNAME_FIELD = 'email' 
-    REQUIRED_FIELDS = ['full_name', 'password']  # 'email' is already the unique identifier
+    REQUIRED_FIELDS = ['full_name']  # 'email' is already the unique identifier
 
     # Use the custom manager for creating users and superusers
     objects = CustomUserManager()
@@ -54,6 +55,10 @@ class CustomUser(AbstractUser):
     def save(self, *args, **kwargs):
         if not self.username:
             self.username = self.email
+        if not self.user_type and self.role:
+            self.user_type = self.role
+        elif not self.role and self.user_type:
+            self.role = self.user_type
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -61,14 +66,14 @@ class CustomUser(AbstractUser):
     
 
 class Inquiry(models.Model):
-        user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='inquiries')
-        message = models.TextField()
-        property = models.ForeignKey('seller.Property', on_delete=models.CASCADE, related_name='property_inquiries')
-        date_created = models.DateTimeField(auto_now_add=True)
-        status = models.CharField(max_length=10, choices=[('new', 'New'), ('replied', 'Replied')], default='new')
-    
-        def __str__(self):
-                return f"Inquiry by {self.user.username} for property {self.property.id}"
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='inquiries')
+    message = models.TextField()
+    property = models.ForeignKey('seller.Property', on_delete=models.CASCADE, related_name='property_inquiries')
+    date_created = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=[('new', 'New'), ('replied', 'Replied')], default='new')
+
+    def __str__(self):
+        return f"Inquiry by {self.user.username} for property {self.property.id}"
         
 class Notification(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='notifications')
@@ -78,4 +83,3 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.email} - {self.message[:20]}"
-        

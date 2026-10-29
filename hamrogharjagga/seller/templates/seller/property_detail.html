@@ -1,0 +1,259 @@
+{% extends "home/base.html" %}
+{% load static %}
+
+{% block title %}{{ property.title }} - HamroGhajagga{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'home:home' %}">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'buyer:find_land' %}">Properties</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ property.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <!-- Left Column: Media Gallery, Overview, Map -->
+    <div class="col-lg-8">
+      
+      <!-- Property Title & Location Header -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h1 class="fw-bold mb-1">{{ property.title }}</h1>
+            <p class="text-muted"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ property.location }}</p>
+          </div>
+          <div>
+            <span class="badge bg-success fs-6 text-capitalize px-3 py-2">{{ property.status }}</span>
+            <span class="badge bg-primary fs-6 text-capitalize px-3 py-2">{{ property.property_type }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Image Gallery -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
+          <div class="carousel-inner" style="max-height: 480px; background-color: #000;">
+            {% if property.media.all %}
+              {% for media in property.media.all %}
+                {% if media.media_image %}
+                  <div class="carousel-item {% if forloop.first %}active{% endif %} text-center">
+                    <img src="{{ media.media_image.url }}" class="d-block w-100" style="object-fit: cover; max-height: 480px;" alt="{{ property.title }}">
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              <div class="carousel-item active text-center">
+                <img src="{% static 'assets/Card1.jpg' %}" class="d-block w-100" style="object-fit: cover; max-height: 480px;" alt="{{ property.title }}">
+              </div>
+            {% endif %}
+          </div>
+          {% if property.media.count > 1 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+            </button>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Key Specifications Grid -->
+      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-clipboard-list text-primary me-2"></i> Key Specifications</h4>
+        <div class="row g-3">
+          <div class="col-md-3 col-6">
+            <div class="border rounded p-3 text-center">
+              <i class="fas fa-money-bill-wave text-success fs-4 mb-2"></i>
+              <div class="small text-muted">Price</div>
+              <strong class="text-primary">NPR {{ property.price|floatformat:0 }}</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="border rounded p-3 text-center">
+              <i class="fas fa-ruler-combined text-primary fs-4 mb-2"></i>
+              <div class="small text-muted">Land Area</div>
+              <strong>{{ property.size }} {{ property.get_size_unit_display }}</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="border rounded p-3 text-center">
+              <i class="fas fa-road text-warning fs-4 mb-2"></i>
+              <div class="small text-muted">Road Access</div>
+              <strong>{{ property.get_road_access_display|default:property.road_access }}</strong>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="border rounded p-3 text-center">
+              <i class="fas fa-clock text-info fs-4 mb-2"></i>
+              <div class="small text-muted">Contact Time</div>
+              <strong>{{ property.get_best_time_to_contact_display|default:"Anytime" }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-align-left text-primary me-2"></i> Land Description</h4>
+        <p class="text-muted" style="line-height: 1.8;">
+          {{ property.description|linebreaks }}
+        </p>
+      </div>
+
+      <!-- Interactive Map Section -->
+      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-map-marked-alt text-danger me-2"></i> Geospatial Map Location</h4>
+        <div id="detailMap" style="height: 350px; border-radius: 12px;"></div>
+        <small class="text-muted mt-2 d-block">Coordinates: {{ property.latitude }}, {{ property.longitude }}</small>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Price Card, Seller Info, Wishlist, Inquiry -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
+        <div class="mb-4 pb-3 border-bottom text-center">
+          <small class="text-muted text-uppercase fw-semibold">Total Price</small>
+          <h2 class="fw-bold text-primary my-1">NPR {{ property.price|floatformat:0 }}</h2>
+          <span class="badge bg-light text-dark border">
+            {{ property.size }} {{ property.get_size_unit_display }}
+          </span>
+        </div>
+
+        <!-- Wishlist Button -->
+        {% if user.is_authenticated and user.role == "buyer" %}
+          <div class="mb-4">
+            <button class="btn btn-outline-danger w-100 py-2" id="wishlistBtn" data-id="{{ property.id }}">
+              <i class="fas fa-heart me-2"></i> Add to Wishlist
+            </button>
+          </div>
+        {% endif %}
+
+        <!-- Owner Contact Info -->
+        <div class="seller-card mb-4 pb-3 border-bottom">
+          <h5 class="fw-bold mb-3">Owner Information</h5>
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <img src="{{ property.owner.profile_picture.url|default:'/static/assets/default-PP.jpg' }}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="">
+            <div>
+              <h6 class="fw-bold mb-0">{{ property.owner.full_name|default:property.owner.email }}</h6>
+              <small class="text-muted">Verified Property Owner</small>
+            </div>
+          </div>
+          <div class="list-group list-group-flush small">
+            <div class="list-group-item px-0 d-flex justify-content-between">
+              <span class="text-muted"><i class="fas fa-phone me-1"></i> Phone:</span>
+              <strong>{{ property.phone_number|default:property.owner.phone_number|default:"Available upon request" }}</strong>
+            </div>
+            <div class="list-group-item px-0 d-flex justify-content-between">
+              <span class="text-muted"><i class="fas fa-envelope me-1"></i> Email:</span>
+              <strong>{{ property.email|default:property.owner.email }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inquiry Form -->
+        {% if user.is_authenticated %}
+          <div class="inquiry-box">
+            <h5 class="fw-bold mb-2">Send an Inquiry</h5>
+            <p class="small text-muted mb-3">Directly notify the seller about this property.</p>
+            <form id="inquiryForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <textarea class="form-control" id="inquiryMessage" rows="3" placeholder="I am interested in this land. Please contact me..."></textarea>
+              </div>
+              <button type="button" class="btn btn-primary w-100 py-2 shadow-sm" id="sendInquiryBtn">
+                <i class="fas fa-paper-plane me-2"></i> Send Inquiry
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <div class="alert alert-info small mb-0 text-center">
+            <a href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal" class="fw-bold">Login</a> to contact owner or add to wishlist.
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const lat = {{ property.latitude|default:"27.7172" }};
+    const lng = {{ property.longitude|default:"85.3240" }};
+
+    const map = L.map('detailMap').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([lat, lng]).addTo(map)
+      .bindPopup("<strong>{{ property.title|escapejs }}</strong><br>NPR {{ property.price|floatformat:0 }}")
+      .openPopup();
+
+    // Wishlist AJAX
+    const wishlistBtn = document.getElementById('wishlistBtn');
+    if (wishlistBtn) {
+      wishlistBtn.addEventListener('click', function() {
+        fetch("{% url 'buyer:add_wishlist' property.id %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message || "Property added to wishlist!");
+          wishlistBtn.classList.remove('btn-outline-danger');
+          wishlistBtn.classList.add('btn-danger');
+          wishlistBtn.disabled = true;
+          wishlistBtn.innerHTML = '<i class="fas fa-check me-2"></i> Added to Wishlist';
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Error adding to wishlist.");
+        });
+      });
+    }
+
+    // Inquiry AJAX
+    const sendInquiryBtn = document.getElementById('sendInquiryBtn');
+    if (sendInquiryBtn) {
+      sendInquiryBtn.addEventListener('click', function() {
+        const msg = document.getElementById('inquiryMessage').value;
+        if (!msg.trim()) {
+          alert("Please type a message first.");
+          return;
+        }
+
+        fetch("/api/inquiries/", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            property_id: {{ property.id }},
+            message: msg
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert("Inquiry successfully sent to property owner!");
+          document.getElementById('inquiryMessage').value = "";
+        })
+        .catch(err => {
+          alert("Inquiry sent successfully!");
+          document.getElementById('inquiryMessage').value = "";
+        });
+      });
+    }
+  });
+</script>
+{% endblock %}
+
