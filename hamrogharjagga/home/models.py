@@ -53,7 +53,7 @@ class CustomUser(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['full_name']
 
-    objects = CustomUserManager()
+    objects = CustomUserManager()  # type: ignore
 
     def save(self, *args, **kwargs):
         if self.email:
