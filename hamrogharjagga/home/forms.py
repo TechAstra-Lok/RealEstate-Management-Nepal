@@ -64,7 +64,7 @@ class LoginForm(forms.Form):
     )
 
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         email = cleaned_data.get("email")
         password = (
             cleaned_data.get("password") or
