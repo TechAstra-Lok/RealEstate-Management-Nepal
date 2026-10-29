@@ -75,6 +75,8 @@ class Property(models.Model):
     )
     features = models.ManyToManyField('Feature', blank=True)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['-created_at']
 
@@ -118,6 +120,8 @@ class PropertyMedia(models.Model):
         upload_to='property_videos/', blank=True, null=True
     )
 
+    objects = models.Manager()
+
     @builtins.property
     def image(self):
         return self.media_image
@@ -133,6 +137,8 @@ class PropertyMedia(models.Model):
 class Feature(models.Model):
     name = models.CharField(max_length=255)
 
+    objects = models.Manager()
+
     def __str__(self):
         return self.name
 
@@ -146,6 +152,8 @@ class Listing(models.Model):
     views = models.PositiveIntegerField(default=0)
     price = models.DecimalField(max_digits=12, decimal_places=2)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['-listing_date']
 
@@ -157,6 +165,8 @@ class Activity(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
 
     class Meta:
         ordering = ['-timestamp']
