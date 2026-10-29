@@ -1,14 +1,144 @@
-# HamroGhajagga — Production Deployment Guide
+# HamroGhajagga — Deployment & Setup Guide
 
-This guide provides end-to-end instructions for deploying the **HamroGhajagga** (Nepal Real Estate & Land Management Platform) on a Linux Virtual Private Server (Ubuntu 22.04 / 24.04 LTS), Docker, or PaaS providers (Render, Railway, DigitalOcean).
+This comprehensive guide covers both **Local Deployment** (for local development, testing, and demonstration on Windows, macOS, and Linux) and **Production Deployment** (for deploying to an Ubuntu VPS with Nginx, Gunicorn, PostgreSQL, and SSL).
 
 ---
 
-## 1. System Requirements & Architecture
+# Part 1: Local Deployment (Windows, macOS, Linux)
+
+Follow these steps to run **HamroGhajagga** on your local machine for development or testing.
+
+### 1.1 Prerequisites
+- **Python**: Version 3.11, 3.12, or 3.13 installed.
+  - Verify with: `python --version` (or `python3 --version`)
+- **Git**: Installed and available in PATH.
+  - Verify with: `git --version`
+
+---
+
+### 1.2 Clone the Repository
+Open your terminal (PowerShell, Command Prompt, or Bash) and clone the repository:
+
+```bash
+git clone https://github.com/TechAstra-Lok/RealEstate-Management-Nepal.git hamrogharjagga
+cd hamrogharjagga
+```
+
+---
+
+### 1.3 Create and Activate a Virtual Environment
+
+#### On Windows (PowerShell):
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+> *Note for PowerShell users*: If you see an execution policy error, run:
+> `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` and try activating again.
+
+#### On Windows (Command Prompt):
+```cmd
+python -m venv venv
+venv\Scripts\activate.bat
+```
+
+#### On macOS / Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+### 1.4 Install Dependencies
+Ensure `pip` is up to date, then install all project dependencies:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+---
+
+### 1.5 Database Setup & Superuser Creation
+
+The platform uses SQLite by default for local development (no external database server required):
+
+```bash
+# 1. Apply database migrations
+python manage.py migrate
+
+# 2. (Optional) Create an administrative superuser to access the Django Admin
+python manage.py createsuperuser
+```
+Follow the interactive prompts to set an email, full name, and password.
+
+---
+
+### 1.6 Run the Local Development Server
+
+Start the Django development server:
+
+```bash
+python manage.py runserver
+```
+
+You should see output similar to:
+```text
+Django version 5.1.5, using settings 'hamrogharjagga.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
+```
+
+To run on a specific port or make it accessible to your local network:
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+---
+
+### 1.7 Local URLs Reference
+
+Once the server is running, open your browser and navigate to:
+
+| Page / Feature | Local URL | Description |
+|---|---|---|
+| **Home Page** | [http://127.0.0.1:8000/](http://127.0.0.1:8000/) | Hero section, featured properties, role-based login/signup modals. |
+| **Buyer Property Search** | [http://127.0.0.1:8000/buyer/find_land/](http://127.0.0.1:8000/buyer/find_land/) | Interactive Leaflet map, multi-unit land area filters, and sorting. |
+| **Buyer Wishlist** | [http://127.0.0.1:8000/buyer/wishlist/](http://127.0.0.1:8000/buyer/wishlist/) | Buyer's saved properties list. |
+| **Seller Dashboard** | [http://127.0.0.1:8000/seller/dashboard/](http://127.0.0.1:8000/seller/dashboard/) | Analytics, chart metrics, inquiries feed, and property listings. |
+| **List New Property** | [http://127.0.0.1:8000/seller/sell/](http://127.0.0.1:8000/seller/sell/) | Interactive pin drop map, media uploads, and listing form. |
+| **Seller Listings** | [http://127.0.0.1:8000/seller/my-properties/](http://127.0.0.1:8000/seller/my-properties/) | Paginated list of properties owned by the seller. |
+| **Django Admin** | [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) | Back-office management for users, properties, inlines, and inquiries. |
+| **REST API Properties** | [http://127.0.0.1:8000/api/properties/](http://127.0.0.1:8000/api/properties/) | Real-time JSON listings & geospatial coordinates endpoint. |
+| **REST API Live Stats** | [http://127.0.0.1:8000/api/stats/](http://127.0.0.1:8000/api/stats/) | Platform live metrics. |
+
+---
+
+### 1.8 Common Local Issues & Troubleshooting
+
+- **Port 8000 already in use**:
+  Run on an alternative port: `python manage.py runserver 8080`.
+- **Media Uploads**:
+  Uploaded property images and videos are stored in `hamrogharjagga/media/`. Django automatically serves them in `DEBUG = True` mode.
+- **System Check**:
+  Verify your local environment at any time by running:
+  ```bash
+  python manage.py check
+  ```
+  *(Should output: `System check identified no issues (0 silenced)`)*
+
+---
+
+# Part 2: Production Deployment (Ubuntu VPS, Nginx, Gunicorn, PostgreSQL, SSL)
+
+This section provides end-to-end instructions for deploying to a production server (Ubuntu 22.04 LTS / 24.04 LTS).
+
+### 2.1 System Requirements & Architecture
 
 - **Operating System**: Ubuntu 22.04 LTS or 24.04 LTS
-- **Python**: 3.11, 3.12, or 3.13
-- **Database**: PostgreSQL 15+ (recommended for production) or SQLite (for demo/small instances)
+- **Python**: 3.11+
+- **Database**: PostgreSQL 15+
 - **Web Server**: Nginx (Reverse Proxy + Static File Serving + SSL)
 - **WSGI Server**: Gunicorn 23.x
 - **Process Manager**: Systemd
@@ -27,14 +157,14 @@ This guide provides end-to-end instructions for deploying the **HamroGhajagga** 
         ▼
    [ Django Application (hamrogharjagga.wsgi) ]
         ▼
-   [ PostgreSQL / SQLite Database ]
+   [ PostgreSQL Database ]
 ```
 
 ---
 
-## 2. Server Initial Setup & Dependencies
+### 2.2 Server Initial Setup & Packages
 
-Connect to your Ubuntu server via SSH and update packages:
+Connect to your Ubuntu server via SSH and install the system prerequisites:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
@@ -43,13 +173,15 @@ sudo apt install -y python3-pip python3-venv python3-dev libpq-dev postgresql po
 
 ---
 
-## 3. PostgreSQL Database Setup
+### 2.3 PostgreSQL Database Setup
+
+Log into PostgreSQL and create the production database and user:
 
 ```bash
 sudo -u postgres psql
 ```
 
-Inside PostgreSQL shell:
+Inside the PostgreSQL shell:
 
 ```sql
 CREATE DATABASE hamrogharjagga_db;
@@ -63,7 +195,7 @@ GRANT ALL PRIVILEGES ON DATABASE hamrogharjagga_db TO hamro_user;
 
 ---
 
-## 4. Clone Project & Set Up Virtual Environment
+### 2.4 Clone Project & Set Up Production Virtual Environment
 
 ```bash
 # Clone the repository
@@ -83,15 +215,15 @@ pip install -r requirements.txt
 
 ---
 
-## 5. Production Environment Variables Configuration
+### 2.5 Production Environment Variables Configuration
 
-Create a `.env` file in the project root:
+Create a production `.env` file:
 
 ```bash
 nano /var/www/hamrogharjagga/.env
 ```
 
-Add the following environment settings:
+Add your production configuration:
 
 ```ini
 DEBUG=False
@@ -112,19 +244,19 @@ SECURE_HSTS_PRELOAD=True
 
 ---
 
-## 6. Run Migrations & Collect Static Files
+### 2.6 Run Migrations & Collect Static Files
 
 ```bash
-# Apply all database migrations
+# Apply database migrations
 python manage.py migrate
 
-# Create initial Superuser (Admin)
+# Create the Admin Superuser
 python manage.py createsuperuser
 
-# Collect static assets into staticfiles/ directory
+# Collect static assets into staticfiles/
 python manage.py collectstatic --noinput
 
-# Set appropriate permissions for uploaded media files
+# Set permissions for media uploads folder
 mkdir -p media
 sudo chown -R www-data:www-data media
 sudo chmod -R 775 media
@@ -132,9 +264,9 @@ sudo chmod -R 775 media
 
 ---
 
-## 7. Gunicorn Systemd Service Configuration
+### 2.7 Gunicorn Systemd Service Configuration
 
-Create a systemd service file for Gunicorn:
+Create a systemd unit file for Gunicorn:
 
 ```bash
 sudo nano /etc/systemd/system/hamrogharjagga.service
@@ -163,7 +295,7 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-Create log folder, enable and start Gunicorn:
+Enable and start the service:
 
 ```bash
 sudo mkdir -p /var/log/gunicorn
@@ -175,9 +307,9 @@ sudo systemctl status hamrogharjagga
 
 ---
 
-## 8. Nginx Reverse Proxy Configuration
+### 2.8 Nginx Reverse Proxy Configuration
 
-Create an Nginx configuration file:
+Create an Nginx server configuration:
 
 ```bash
 sudo nano /etc/nginx/sites-available/hamrogharjagga
@@ -206,7 +338,7 @@ server {
         add_header Cache-Control "public, max-age=2592000";
     }
 
-    # Proxy all other requests to Gunicorn
+    # Proxy application requests to Gunicorn
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
@@ -217,7 +349,7 @@ server {
 }
 ```
 
-Enable site and restart Nginx:
+Enable the configuration and reload Nginx:
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/hamrogharjagga /etc/nginx/sites-enabled/
@@ -227,39 +359,24 @@ sudo systemctl restart nginx
 
 ---
 
-## 9. SSL Certificate Setup (Let's Encrypt HTTPS)
+### 2.9 SSL Certificate Setup (Let's Encrypt HTTPS)
 
-Secure your deployment with free SSL via Certbot:
+Obtain and configure free SSL with Certbot:
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 ```
 
-Certbot will automatically reconfigure Nginx for HTTPS on port 443 and setup certificate auto-renewal.
+Certbot automatically configures HTTPS port 443 in Nginx and installs a renewal cron job.
 
 ---
 
-## 10. Platform Health Verification
+### 2.10 Maintenance & Update Runbook
 
-Verify that all services are operational:
-
-1. **Web Access**: Navigate to `https://yourdomain.com/` — The home page should load cleanly with featured land properties.
-2. **Admin Portal**: Navigate to `https://yourdomain.com/admin/` — Log in with the superuser credentials.
-3. **Interactive Search**: Visit `https://yourdomain.com/buyer/find_land/` — Check the Leaflet map and area filters.
-4. **API Endpoints**: Check live JSON responses:
-   - `GET /api/properties/`
-   - `GET /api/stats/`
-
----
-
-## 11. Maintenance & Routine Commands
+When deploying updates from the repository:
 
 ```bash
-# Check service status
-sudo systemctl status hamrogharjagga
-
-# Restart application after pulling updates
 cd /var/www/hamrogharjagga
 git pull origin main
 source venv/bin/activate
@@ -268,6 +385,6 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 sudo systemctl restart hamrogharjagga
 
-# View live application logs
+# Monitor live application logs
 sudo journalctl -u hamrogharjagga -f
 ```
