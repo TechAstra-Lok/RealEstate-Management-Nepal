@@ -72,7 +72,7 @@ class Property(models.Model):
     @property
     def location(self):
         parts = [self.tole, f"Ward {self.ward}" if self.ward else None, self.municipality, self.district, self.province]
-        return ", ".join([p for p in parts if p])
+        return ", ".join([str(p).strip() for p in parts if p and str(p).strip()])
 
     @property
     def main_image(self):
@@ -121,11 +121,18 @@ class Listing(models.Model):
     class Meta:
         ordering = ['-listing_date']
 
+    def __str__(self):
+        return f"Listing: {self.property.title} by {self.seller.email}"
+
 
 class Activity(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-timestamp']
+
     def __str__(self):
-        return f"Activity by {self.user.username} on {self.timestamp}"
+        user_str = self.user.full_name or self.user.email
+        return f"Activity by {user_str} on {self.timestamp.strftime('%Y-%m-%d %H:%M')}"

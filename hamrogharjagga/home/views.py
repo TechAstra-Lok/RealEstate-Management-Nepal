@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib import messages
 from django.urls import reverse
 from django.http import JsonResponse
@@ -10,9 +10,10 @@ from seller.models import Property
 
 def home_view(request):
     if request.user.is_authenticated:
-        if request.user.role == "seller":
+        user_role = getattr(request.user, 'role', '')
+        if user_role == "seller":
             return redirect("seller:dashboard")
-        elif request.user.role == "buyer":
+        elif user_role == "buyer":
             return redirect("buyer:find_land")
     
     featured_properties = Property.objects.filter(status__iexact="available").order_by('-views')[:6]
@@ -22,7 +23,11 @@ def home_view(request):
 def user_register(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.POST.get('role') is not None
+        is_ajax = (
+            request.headers.get('x-requested-with') == 'XMLHttpRequest' 
+            or request.POST.get('is_ajax') == 'true' 
+            or 'full_name' in request.POST
+        )
         
         if form.is_valid():
             try:
@@ -44,7 +49,11 @@ def user_register(request):
         else:
             errors = form.errors.as_text()
             if is_ajax:
-                return JsonResponse({'status': 'error', 'message': f'Validation failed: {errors}'})
+                first_error = ""
+                for field, error_list in form.errors.items():
+                    first_error = f"{field}: {error_list[0]}"
+                    break
+                return JsonResponse({'status': 'error', 'message': first_error or 'Validation failed. Please check form errors.'})
             messages.error(request, "Registration failed. Please check form errors.")
     else:
         form = RegisterForm()
@@ -55,31 +64,31 @@ def user_register(request):
 def user_login(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
-        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'password2' in request.POST
+        is_ajax = (
+            request.headers.get('x-requested-with') == 'XMLHttpRequest' 
+            or request.POST.get('is_ajax') == 'true' 
+            or 'password2' in request.POST 
+            or 'password' in request.POST
+        )
         
         if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password2']
-            user = authenticate(request, username=email, password=password)
+            user = form.cleaned_data['user']
+            login(request, user)
+            redirect_url = reverse('seller:dashboard') if getattr(user, 'role', '') == 'seller' else reverse('buyer:find_land')
             
-            if user is not None:
-                login(request, user)
-                redirect_url = reverse('seller:dashboard') if user.role == 'seller' else reverse('buyer:find_land')
-                
-                if is_ajax:
-                    return JsonResponse({
-                        'status': 'success',
-                        'message': 'Login successful!',
-                        'redirect_url': redirect_url
-                    })
-                return redirect(redirect_url)
-            else:
-                if is_ajax:
-                    return JsonResponse({'status': 'error', 'message': 'Invalid email or password. Please try again.'})
-                form.add_error(None, 'Invalid email or password.')
+            if is_ajax:
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Login successful!',
+                    'redirect_url': redirect_url
+                })
+            return redirect(redirect_url)
         else:
             if is_ajax:
-                return JsonResponse({'status': 'error', 'message': 'Please provide a valid email and password.'})
+                err_list = form.non_field_errors()
+                msg = err_list[0] if err_list else "Invalid email or password. Please try again."
+                return JsonResponse({'status': 'error', 'message': msg})
+            messages.error(request, "Invalid email or password.")
     else:
         form = LoginForm()
 

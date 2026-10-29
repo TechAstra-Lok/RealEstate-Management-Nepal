@@ -3,20 +3,22 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from seller.models import Property
-from .models import Location, Wishlist
+from .models import Wishlist
 from .utils import convert_to_square_meters 
 
 
 def property_list(request):
-    properties = Property.objects.filter(status__iexact="available")
-    return render(request, 'buyer/properties.html', {'properties': properties})
+    """
+    Public listings view / redirect to find_land.
+    """
+    return redirect("buyer:find_land")
 
 
 @login_required
 def find_land(request):
     user = request.user 
-    if user.role != "buyer":
-        return redirect("home:home")
+    if getattr(user, 'role', '') == "seller":
+        return redirect("seller:dashboard")
 
     # Retrieve filter parameters
     municipality = request.GET.get('municipality', '').strip()
@@ -32,7 +34,7 @@ def find_land(request):
 
     properties = Property.objects.filter(status__iexact="available")
 
-    # Apply filters
+    # Apply location filters
     if municipality:
         properties = properties.filter(municipality__icontains=municipality)
     if district:
@@ -43,21 +45,30 @@ def find_land(request):
         properties = properties.filter(property_type__iexact=property_type)
     if road_access:
         properties = properties.filter(road_access__iexact=road_access)
+
+    # Apply price range filters
     if min_price:
         try:
             properties = properties.filter(price__gte=float(min_price))
-        except ValueError:
+        except (ValueError, TypeError):
             pass
     if max_price:
         try:
             properties = properties.filter(price__lte=float(max_price))
-        except ValueError:
+        except (ValueError, TypeError):
             pass
+
+    # Apply accurate land area size filter converted to square meters
     if area_size:
         try:
-            area_size_in_meters = convert_to_square_meters(float(area_size), area_unit)
-            properties = properties.filter(size__gte=float(area_size))
-        except ValueError:
+            target_sqm = convert_to_square_meters(float(area_size), area_unit)
+            matched_ids = []
+            for p in properties:
+                p_sqm = convert_to_square_meters(float(p.size), p.size_unit)
+                if p_sqm >= target_sqm:
+                    matched_ids.append(p.id)
+            properties = properties.filter(id__in=matched_ids)
+        except (ValueError, TypeError):
             pass
 
     sort_options = {
@@ -75,8 +86,8 @@ def find_land(request):
         markers_data.append({
             'id': p.id,
             'title': p.title,
-            'price': float(p.price),
-            'size': float(p.size),
+            'price': float(p.price) if p.price is not None else 0.0,
+            'size': float(p.size) if p.size is not None else 0.0,
             'size_unit': p.get_size_unit_display(),
             'lat': p.latitude,
             'lng': p.longitude,
@@ -112,10 +123,7 @@ def wishlist(request):
 def add_to_wishlist(request, property_id):
     user = request.user
     property_obj = get_object_or_404(Property, id=property_id)
-    created = False
-    if not Wishlist.objects.filter(user=user, property=property_obj).exists():
-        Wishlist.objects.create(user=user, property=property_obj)
-        created = True
+    wishlist_item, created = Wishlist.objects.get_or_create(user=user, property=property_obj)
     return JsonResponse({
         "status": "success",
         "created": created,
@@ -127,4 +135,6 @@ def add_to_wishlist(request, property_id):
 def remove_from_wishlist(request, wishlist_id):
     wishlist_item = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
     wishlist_item.delete()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Removed from wishlist.'})
     return redirect("buyer:wishlist")

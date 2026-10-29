@@ -42,6 +42,13 @@
                   <div class="carousel-item {% if forloop.first %}active{% endif %} text-center">
                     <img src="{{ media.media_image.url }}" class="d-block w-100" style="object-fit: cover; max-height: 480px;" alt="{{ property.title }}">
                   </div>
+                {% elif media.media_video %}
+                  <div class="carousel-item {% if forloop.first %}active{% endif %} text-center">
+                    <video controls class="d-block w-100" style="max-height: 480px;">
+                      <source src="{{ media.media_video.url }}">
+                      Your browser does not support video playback.
+                    </video>
+                  </div>
                 {% endif %}
               {% endfor %}
             {% else %}
@@ -99,9 +106,9 @@
       <!-- Description -->
       <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
         <h4 class="fw-bold mb-3"><i class="fas fa-align-left text-primary me-2"></i> Land Description</h4>
-        <p class="text-muted" style="line-height: 1.8;">
+        <div class="text-muted" style="line-height: 1.8;">
           {{ property.description|linebreaks }}
-        </p>
+        </div>
       </div>
 
       <!-- Interactive Map Section -->
@@ -127,9 +134,15 @@
         <!-- Wishlist Button -->
         {% if user.is_authenticated and user.role == "buyer" %}
           <div class="mb-4">
-            <button class="btn btn-outline-danger w-100 py-2" id="wishlistBtn" data-id="{{ property.id }}">
-              <i class="fas fa-heart me-2"></i> Add to Wishlist
-            </button>
+            {% if is_in_wishlist %}
+              <button class="btn btn-danger w-100 py-2" id="wishlistBtn" disabled>
+                <i class="fas fa-check me-2"></i> Saved in Wishlist
+              </button>
+            {% else %}
+              <button class="btn btn-outline-danger w-100 py-2" id="wishlistBtn" data-id="{{ property.id }}">
+                <i class="fas fa-heart me-2"></i> Add to Wishlist
+              </button>
+            {% endif %}
           </div>
         {% endif %}
 
@@ -137,7 +150,11 @@
         <div class="seller-card mb-4 pb-3 border-bottom">
           <h5 class="fw-bold mb-3">Owner Information</h5>
           <div class="d-flex align-items-center gap-3 mb-3">
-            <img src="{{ property.owner.profile_picture.url|default:'/static/assets/default-PP.jpg' }}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="">
+            {% if property.owner.profile_picture %}
+              <img src="{{ property.owner.profile_picture.url }}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="Owner avatar">
+            {% else %}
+              <img src="{% static 'assets/default-PP.jpg' %}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="Default avatar">
+            {% endif %}
             <div>
               <h6 class="fw-bold mb-0">{{ property.owner.full_name|default:property.owner.email }}</h6>
               <small class="text-muted">Verified Property Owner</small>
@@ -197,8 +214,9 @@
 
     // Wishlist AJAX
     const wishlistBtn = document.getElementById('wishlistBtn');
-    if (wishlistBtn) {
+    if (wishlistBtn && !wishlistBtn.disabled) {
       wishlistBtn.addEventListener('click', function() {
+        wishlistBtn.disabled = true;
         fetch("{% url 'buyer:add_wishlist' property.id %}", {
           method: "POST",
           headers: {
@@ -211,12 +229,12 @@
           alert(data.message || "Property added to wishlist!");
           wishlistBtn.classList.remove('btn-outline-danger');
           wishlistBtn.classList.add('btn-danger');
-          wishlistBtn.disabled = true;
-          wishlistBtn.innerHTML = '<i class="fas fa-check me-2"></i> Added to Wishlist';
+          wishlistBtn.innerHTML = '<i class="fas fa-check me-2"></i> Saved in Wishlist';
         })
         .catch(err => {
           console.error(err);
           alert("Error adding to wishlist.");
+          wishlistBtn.disabled = false;
         });
       });
     }
@@ -225,11 +243,15 @@
     const sendInquiryBtn = document.getElementById('sendInquiryBtn');
     if (sendInquiryBtn) {
       sendInquiryBtn.addEventListener('click', function() {
-        const msg = document.getElementById('inquiryMessage').value;
-        if (!msg.trim()) {
+        const msgInput = document.getElementById('inquiryMessage');
+        const msg = msgInput.value.trim();
+        if (!msg) {
           alert("Please type a message first.");
           return;
         }
+
+        sendInquiryBtn.disabled = true;
+        sendInquiryBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sending...';
 
         fetch("/api/inquiries/", {
           method: "POST",
@@ -244,16 +266,23 @@
         })
         .then(res => res.json())
         .then(data => {
-          alert("Inquiry successfully sent to property owner!");
-          document.getElementById('inquiryMessage').value = "";
+          if (data.status === 'success') {
+            alert(data.message || "Inquiry successfully sent to property owner!");
+            msgInput.value = "";
+          } else {
+            alert(data.message || "Could not submit inquiry. Please try again.");
+          }
         })
         .catch(err => {
-          alert("Inquiry sent successfully!");
-          document.getElementById('inquiryMessage').value = "";
+          console.error(err);
+          alert("Error submitting inquiry. Please try again.");
+        })
+        .finally(() => {
+          sendInquiryBtn.disabled = false;
+          sendInquiryBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Send Inquiry';
         });
       });
     }
   });
 </script>
 {% endblock %}
-

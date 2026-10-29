@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate
 from .models import CustomUser
 
@@ -21,13 +21,17 @@ class RegisterForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
-        if CustomUser.objects.filter(email=email).exists():
-            raise forms.ValidationError("Email is already registered!")
+        if email:
+            email = email.lower().strip()
+            if CustomUser.objects.filter(email__iexact=email).exists():
+                raise forms.ValidationError("An account with this email already exists.")
         return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data["email"]
+        email = self.cleaned_data["email"].lower().strip()
+        user.email = email
+        user.username = email
         user.full_name = self.cleaned_data["full_name"]
         user.phone_number = self.cleaned_data.get("phone_number", "")
         user.municipality = self.cleaned_data.get("municipality", "")
@@ -42,17 +46,27 @@ class RegisterForm(UserCreationForm):
 
 class LoginForm(forms.Form):
     email = forms.EmailField(label="Email", required=True)
-    password2 = forms.CharField(widget=forms.PasswordInput(), label="Password", required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), label="Password", required=False)
+    password2 = forms.CharField(widget=forms.PasswordInput(), label="Password", required=False)
 
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get("email")
-        password = cleaned_data.get("password2")
+        password = cleaned_data.get("password") or cleaned_data.get("password2")
 
-        if email and password:
-            user = authenticate(username=email, password=password)
-            if user is None:
-                raise forms.ValidationError("Invalid email or password")
-            cleaned_data["user"] = user
+        if not email:
+            raise forms.ValidationError("Email is required.")
+        if not password:
+            raise forms.ValidationError("Password is required.")
 
+        email = email.lower().strip()
+        user = authenticate(username=email, password=password)
+        if user is None:
+            raise forms.ValidationError("Invalid email or password.")
+        if not user.is_active:
+            raise forms.ValidationError("This account has been deactivated.")
+
+        cleaned_data["user"] = user
+        cleaned_data["email"] = email
+        cleaned_data["password"] = password
         return cleaned_data
