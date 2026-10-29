@@ -200,8 +200,8 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const lat = {{ property.latitude|default:"27.7172" }};
-    const lng = {{ property.longitude|default:"85.3240" }};
+    const lat = parseFloat("{{ property.latitude|default:'27.7172' }}") || 27.7172;
+    const lng = parseFloat("{{ property.longitude|default:'85.3240' }}") || 85.3240;
 
     const map = L.map('detailMap').setView([lat, lng], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -260,7 +260,7 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            property_id: {{ property.id }},
+            property_id: parseInt("{{ property.id }}", 10),
             message: msg
           })
         })
