@@ -1,95 +1,368 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}HamroGhajagga - Nepal's Premium Land Platform{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'styles/main.css' %}" />
+  <title>{% block title %}HamroGharJagga - Nepal's Premier Real Estate & Land Platform{% endblock %}</title>
+  
+  <!-- Google Fonts & Modern Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Frameworks -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+  
+  <!-- Custom Modern Design System -->
+  <link rel="stylesheet" href="{% static 'styles/main.css' %}?v=2.0" />
+
   <script>
     window.userRole = "{{ user.role|default:'' }}"; 
     window.userAuthenticated = "{{ user.is_authenticated|yesno:'true,false' }}"; 
   </script>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+
+  <!-- Modern Sticky Glassmorphism Navbar -->
+  <nav class="navbar navbar-expand-lg custom-navbar fixed-top">
     <div class="container">
-      <a class="navbar-brand" href="{% url 'home:home' %}"><i class="fas fa-landmark"></i> HamroGhajagga</a>
-      <div class="navbar-nav ms-auto">
-        {% if user.is_authenticated %}
-          {% if user.role == "buyer" %}
-            <a class="nav-link pulse" href="{% url 'buyer:find_land' %}"><i class="fas fa-search"></i> Find Land</a>
-            <a class="nav-link pulse" href="{% url 'buyer:wishlist' %}"><i class="fas fa-heart"></i> Wishlist</a>
-            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
-          {% elif user.role == "seller" %}
-            <a class="nav-link pulse" href="{% url 'seller:dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-            <a class="nav-link pulse" href="{% url 'seller:sell' %}"><i class="fas fa-sellcast"></i> Sell Land</a>
-            <a class="nav-link pulse" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      <a class="navbar-brand navbar-brand-logo" href="{% url 'home:home' %}">
+        <i class="fas fa-landmark text-primary"></i>
+        <span>Hamro<span style="color: #10B981;">Ghar</span>Jagga</span>
+      </a>
+
+      <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars-staggered fs-4 text-dark"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <!-- Center Nav Items -->
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-1">
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'buyer:find_land' %}">
+              <i class="fas fa-map-marked-alt text-primary"></i> Explore Properties
+            </a>
+          </li>
+          <li class="nav-item">
+            <!-- Modal trigger for Live Nepali Land Converter -->
+            <a class="nav-link nav-link-custom" href="#" data-bs-toggle="modal" data-bs-target="#nepaliConverterModal">
+              <i class="fas fa-calculator text-warning"></i> Land Converter
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'home:about' %}">
+              About Us
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'home:contact' %}">
+              Contact
+            </a>
+          </li>
+        </ul>
+
+        <!-- Right Action Items -->
+        <div class="d-flex align-items-center gap-2">
+          {% if user.is_authenticated %}
+            {% if user.role == "buyer" %}
+              <a class="nav-link nav-link-custom" href="{% url 'buyer:wishlist' %}" title="Wishlist">
+                <i class="fas fa-heart text-danger"></i> Wishlist
+              </a>
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-user-circle me-1"></i> {{ user.full_name|default:user.email|truncatechars:15 }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3">
+                  <li><a class="dropdown-item" href="{% url 'buyer:wishlist' %}"><i class="fas fa-heart text-danger me-2"></i> Saved Lands</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger" href="{% url 'home:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                </ul>
+              </div>
+            {% elif user.role == "seller" %}
+              <a class="nav-link nav-link-custom" href="{% url 'seller:dashboard' %}">
+                <i class="fas fa-tachometer-alt text-primary"></i> Dashboard
+              </a>
+              <a class="btn btn-post-ad" href="{% url 'seller:sell' %}">
+                <i class="fas fa-plus-circle"></i> Post Property
+              </a>
+              <a class="btn btn-sm btn-outline-danger rounded-pill px-3 ms-1" href="{% url 'home:logout' %}" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+              </a>
+            {% endif %}
+          {% else %}
+            <a class="nav-link nav-link-custom" href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal">
+              <i class="fas fa-sign-in-alt text-primary"></i> Login
+            </a>
+            <a class="btn btn-outline-primary rounded-pill px-3 py-1 fw-semibold text-sm" href="{% url 'home:register' %}" data-bs-toggle="modal" data-bs-target="#registerModal">
+              Register
+            </a>
+            <a class="btn btn-post-ad ms-1" href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal">
+              <i class="fas fa-plus"></i> Sell Land
+            </a>
           {% endif %}
-        {% else %}
-          <a class="nav-link pulse" href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal"><i class="fas fa-sign-in-alt"></i> Login</a>
-          <a class="nav-link pulse" href="{% url 'home:register' %}" data-bs-toggle="modal" data-bs-target="#registerModal"><i class="fas fa-user-plus"></i> Register</a>
-        {% endif %}
+        </div>
       </div>
     </div>
   </nav>
-  <!-- Main content -->
-  <div style="margin-top: 56px;"></div>
-  {% block content %}{% endblock %}
 
-  <!-- Footer Section -->
-  <footer class="footer">
+  <!-- Offset for Fixed Navbar -->
+  <div style="height: 72px;"></div>
+
+  <!-- Content Injection Block -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modern Footer -->
+  <footer class="footer-modern">
     <div class="container">
-      <div class="row">
-        <div class="col-md-4">
-          <h5><i class="fas fa-landmark"></i> HamroGhajagga</h5>
-          <p>Your trusted platform for land properties in Nepal.</p>
-          <div class="social-links">
-            <a href="#"><i class="fab fa-facebook"></i></a>
-            <a href="#"><i class="fab fa-twitter"></i></a>
-            <a href="#"><i class="fab fa-instagram"></i></a>
+      <div class="row g-4 mb-5">
+        <div class="col-lg-4 col-md-6">
+          <div class="navbar-brand-logo mb-3 text-white">
+            <i class="fas fa-landmark text-primary"></i>
+            <span class="text-white">Hamro<span style="color: #10B981;">Ghar</span>Jagga</span>
+          </div>
+          <p class="text-secondary small mb-4 pe-lg-4" style="line-height: 1.8;">
+            Nepal’s premier transparent digital real estate ecosystem. Bridging landowners, buyers, and developers across all 7 provinces with verified cadastral mapping, authentic legal records, and zero hidden broker fees.
+          </p>
+          <div class="d-flex align-items-center">
+            <a href="#" class="footer-social-btn" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" class="footer-social-btn" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="footer-social-btn" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" class="footer-social-btn" title="YouTube"><i class="fab fa-youtube"></i></a>
           </div>
         </div>
-        <div class="col-md-4">
-          <h5>Quick Links</h5>
-          <ul class="footer-links">
-            <li><a href="{% url 'home:about' %}">About Us</a></li>
-            <li><a href="{% url 'home:terms' %}">Terms &amp; Conditions</a></li>
-            <li><a href="{% url 'home:privacy' %}">Privacy Policy</a></li>
-            <li><a href="{% url 'home:contact' %}">Contact Us</a></li>            
+
+        <div class="col-lg-2 col-md-6 col-6">
+          <h5>Quick Navigation</h5>
+          <ul class="footer-modern-links">
+            <li><a href="{% url 'buyer:find_land' %}"><i class="fas fa-chevron-right small text-primary"></i> Browse Land</a></li>
+            <li><a href="#" data-bs-toggle="modal" data-bs-target="#nepaliConverterModal"><i class="fas fa-chevron-right small text-primary"></i> Land Converter</a></li>
+            <li><a href="{% url 'home:about' %}"><i class="fas fa-chevron-right small text-primary"></i> About Company</a></li>
+            <li><a href="{% url 'home:contact' %}"><i class="fas fa-chevron-right small text-primary"></i> Contact Support</a></li>
+            <li><a href="{% url 'seller:sell' %}"><i class="fas fa-chevron-right small text-primary"></i> List Property</a></li>
           </ul>
         </div>
-        <div class="col-md-4">
-          <h5>Contact Us</h5>
-          <ul class="contact-info">
-            <li><i class="fas fa-envelope"></i> info@hamroghajagga.com</li>
-            <li><i class="fas fa-phone"></i> +977-1-4XXXXXX</li>
-            <li><i class="fas fa-map-marker-alt"></i> Kathmandu, Nepal</li>
+
+        <div class="col-lg-2 col-md-6 col-6">
+          <h5>Popular Regions</h5>
+          <ul class="footer-modern-links">
+            <li><a href="{% url 'buyer:find_land' %}?district=Kathmandu">Kathmandu Plots</a></li>
+            <li><a href="{% url 'buyer:find_land' %}?district=Lalitpur">Lalitpur Properties</a></li>
+            <li><a href="{% url 'buyer:find_land' %}?district=Bhaktapur">Bhaktapur Land</a></li>
+            <li><a href="{% url 'buyer:find_land' %}?district=Pokhara">Pokhara Valley</a></li>
+            <li><a href="{% url 'buyer:find_land' %}?district=Chitwan">Chitwan Farmlands</a></li>
           </ul>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+          <h5>Nepal Corporate Office</h5>
+          <div class="d-flex flex-column gap-3 text-secondary small">
+            <div class="d-flex gap-3 align-items-start">
+              <i class="fas fa-location-dot text-danger mt-1 fs-6"></i>
+              <span>New Baneshwor, Kathmandu, Nepal (Near Parliament Complex)</span>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <i class="fas fa-phone text-success fs-6"></i>
+              <span>+977-1-4789000 / +977-9801000000</span>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <i class="fas fa-envelope text-primary fs-6"></i>
+              <span>support@hamrogharjagga.com</span>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+              <i class="fab fa-whatsapp text-success fs-6"></i>
+              <span>Direct WhatsApp Helpdesk: +977-9801000000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 mt-4 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2 small text-secondary">
+        <div>
+          &copy; {{ now|date:'Y'|default:'2026' }} HamroGharJagga Nepal Pvt. Ltd. All rights reserved.
+        </div>
+        <div class="d-flex gap-3">
+          <a href="{% url 'home:terms' %}" class="text-secondary text-decoration-none">Terms of Service</a>
+          <span>&bull;</span>
+          <a href="{% url 'home:privacy' %}" class="text-secondary text-decoration-none">Privacy Policy</a>
+          <span>&bull;</span>
+          <a href="{% url 'home:contact' %}" class="text-secondary text-decoration-none">Help Center</a>
         </div>
       </div>
     </div>
   </footer>
 
+  <!-- ==========================================================================
+       INTERACTIVE NEPALI LAND CONVERTER MODAL (Ropani-Aana ⇄ Bigha-Kattha ⇄ Sq. Ft)
+       ========================================================================== -->
+  <div class="modal fade" id="nepaliConverterModal" tabindex="-1" aria-labelledby="nepaliConverterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-header bg-primary text-white p-4">
+          <div>
+            <h5 class="modal-title fw-bold mb-1" id="nepaliConverterModalLabel">
+              <i class="fas fa-calculator me-2"></i> Nepali Land Measurement Converter
+            </h5>
+            <small class="opacity-75">Convert accurately between Ropani System, Bigha System &amp; Square Feet</small>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-4">
+            <!-- Hilly Region: Ropani - Aana - Paisa - Daam -->
+            <div class="col-md-6 border-end-md">
+              <h6 class="fw-bold text-primary mb-3">
+                <i class="fas fa-mountain me-1"></i> Ropani System (Pahad / Hills)
+              </h6>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Ropani</label>
+                  <input type="number" step="any" id="conv_ropani" class="form-control form-control-sm" placeholder="0" value="1">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Aana</label>
+                  <input type="number" step="any" id="conv_aana" class="form-control form-control-sm" placeholder="0" value="0">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Paisa</label>
+                  <input type="number" step="any" id="conv_paisa" class="form-control form-control-sm" placeholder="0" value="0">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small fw-semibold">Daam</label>
+                  <input type="number" step="any" id="conv_daam" class="form-control form-control-sm" placeholder="0" value="0">
+                </div>
+              </div>
+              <button class="btn btn-outline-primary btn-sm w-100" id="btnConvertRopani">
+                Calculate from Ropani
+              </button>
+            </div>
+
+            <!-- Terai Region: Bigha - Kattha - Dhur -->
+            <div class="col-md-6">
+              <h6 class="fw-bold text-success mb-3">
+                <i class="fas fa-tree me-1"></i> Bigha System (Terai / Plains)
+              </h6>
+              <div class="row g-2 mb-3">
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Bigha</label>
+                  <input type="number" step="any" id="conv_bigha" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Kattha</label>
+                  <input type="number" step="any" id="conv_kattha" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-4">
+                  <label class="form-label small fw-semibold">Dhur</label>
+                  <input type="number" step="any" id="conv_dhur" class="form-control form-control-sm" placeholder="0">
+                </div>
+              </div>
+              <button class="btn btn-outline-success btn-sm w-100" id="btnConvertBigha">
+                Calculate from Bigha
+              </button>
+            </div>
+          </div>
+
+          <!-- Total Metric Output Card -->
+          <div class="mt-4 p-3 bg-light rounded-3 border">
+            <div class="row text-center g-2">
+              <div class="col-4">
+                <div class="small text-muted">Total Square Feet</div>
+                <h5 class="fw-bold text-primary mb-0" id="out_sqft">5,476 sq. ft</h5>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Square Meters</div>
+                <h5 class="fw-bold text-dark mb-0" id="out_sqm">508.74 m²</h5>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted">Equivalent Aana</div>
+                <h5 class="fw-bold text-success mb-0" id="out_aana">16.0 Aana</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Login and Register Modals -->
   {% include 'home/modals.html' %}
 
-  <!-- Scripts -->
+  <!-- Core Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-  <script src="{% static 'js/locations.js' %}"></script>
-  <script src="{% static 'js/main.js' %}?v={{ now|date:'U' }}"></script>
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Interactive Land Converter Script -->
+  <script>
+    (function() {
+      // 1 Ropani = 5476 sq ft
+      // 1 Aana = 342.25 sq ft
+      // 1 Paisa = 85.56 sq ft
+      // 1 Daam = 21.39 sq ft
+      // 1 Bigha = 72900 sq ft
+      // 1 Kattha = 3645 sq ft
+      // 1 Dhur = 182.25 sq ft
+
+      function calculateFromRopani() {
+        const ropani = parseFloat(document.getElementById('conv_ropani').value) || 0;
+        const aana = parseFloat(document.getElementById('conv_aana').value) || 0;
+        const paisa = parseFloat(document.getElementById('conv_paisa').value) || 0;
+        const daam = parseFloat(document.getElementById('conv_daam').value) || 0;
+
+        const totalSqft = (ropani * 5476) + (aana * 342.25) + (paisa * 85.56) + (daam * 21.39);
+        updateOutputs(totalSqft);
+
+        // Update Bigha inputs
+        const bigha = Math.floor(totalSqft / 72900);
+        const remBigha = totalSqft % 72900;
+        const kattha = Math.floor(remBigha / 3645);
+        const remKattha = remBigha % 3645;
+        const dhur = (remKattha / 182.25).toFixed(2);
+
+        document.getElementById('conv_bigha').value = bigha;
+        document.getElementById('conv_kattha').value = kattha;
+        document.getElementById('conv_dhur').value = dhur;
+      }
+
+      function calculateFromBigha() {
+        const bigha = parseFloat(document.getElementById('conv_bigha').value) || 0;
+        const kattha = parseFloat(document.getElementById('conv_kattha').value) || 0;
+        const dhur = parseFloat(document.getElementById('conv_dhur').value) || 0;
+
+        const totalSqft = (bigha * 72900) + (kattha * 3645) + (dhur * 182.25);
+        updateOutputs(totalSqft);
+
+        // Update Ropani inputs
+        const ropani = Math.floor(totalSqft / 5476);
+        const remRopani = totalSqft % 5476;
+        const aana = Math.floor(remRopani / 342.25);
+        const remAana = remRopani % 342.25;
+        const paisa = Math.floor(remAana / 85.56);
+        const remPaisa = remAana % 85.56;
+        const daam = (remPaisa / 21.39).toFixed(2);
+
+        document.getElementById('conv_ropani').value = ropani;
+        document.getElementById('conv_aana').value = aana;
+        document.getElementById('conv_paisa').value = paisa;
+        document.getElementById('conv_daam').value = daam;
+      }
+
+      function updateOutputs(sqft) {
+        document.getElementById('out_sqft').innerText = Number(sqft.toFixed(2)).toLocaleString() + " sq. ft";
+        document.getElementById('out_sqm').innerText = (sqft * 0.092903).toFixed(2) + " m²";
+        document.getElementById('out_aana').innerText = (sqft / 342.25).toFixed(2) + " Aana";
+      }
+
+      document.getElementById('btnConvertRopani')?.addEventListener('click', calculateFromRopani);
+      document.getElementById('btnConvertBigha')?.addEventListener('click', calculateFromBigha);
+    })();
+  </script>
 
 </body>
 </html>

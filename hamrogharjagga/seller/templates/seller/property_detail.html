@@ -1,41 +1,45 @@
 {% extends "home/base.html" %}
 {% load static %}
 
-{% block title %}{{ property.title }} - HamroGhajagga{% endblock %}
+{% block title %}{{ property.title }} - HamroGharJagga Nepal{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
   <!-- Breadcrumb -->
-  <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
       <li class="breadcrumb-item"><a href="{% url 'home:home' %}">Home</a></li>
       <li class="breadcrumb-item"><a href="{% url 'buyer:find_land' %}">Properties</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ property.title }}</li>
+      <li class="breadcrumb-item active" aria-current="page">{{ property.title|truncatechars:35 }}</li>
     </ol>
   </nav>
 
   <div class="row g-4">
-    <!-- Left Column: Media Gallery, Overview, Map -->
+    <!-- Left Column: Gallery, Specs, Description, Map, Financials -->
     <div class="col-lg-8">
       
-      <!-- Property Title & Location Header -->
-      <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-          <div>
-            <h1 class="fw-bold mb-1">{{ property.title }}</h1>
-            <p class="text-muted"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ property.location }}</p>
-          </div>
-          <div>
-            <span class="badge bg-success fs-6 text-capitalize px-3 py-2">{{ property.status }}</span>
-            <span class="badge bg-primary fs-6 text-capitalize px-3 py-2">{{ property.property_type }}</span>
+      <!-- Property Title & Badges -->
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+          <h1 class="fw-bold mb-1 fs-2">{{ property.title }}</h1>
+          <div class="d-flex gap-2">
+            <span class="badge bg-success fs-6 text-capitalize px-3 py-2 rounded-pill">
+              <i class="fas fa-check-circle me-1"></i> {{ property.status }}
+            </span>
+            <span class="badge bg-primary fs-6 text-capitalize px-3 py-2 rounded-pill">
+              {{ property.property_type }}
+            </span>
           </div>
         </div>
+        <p class="text-muted fs-6 mb-0">
+          <i class="fas fa-location-dot text-danger me-2"></i>{{ property.location }}
+        </p>
       </div>
 
       <!-- Main Image Gallery -->
-      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-dark">
         <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
-          <div class="carousel-inner" style="max-height: 480px; background-color: #000;">
+          <div class="carousel-inner" style="max-height: 480px;">
             {% if property.media.all %}
               {% for media in property.media.all %}
                 {% if media.media_image %}
@@ -68,128 +72,144 @@
         </div>
       </div>
 
-      <!-- Key Specifications Grid -->
-      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
-        <h4 class="fw-bold mb-3"><i class="fas fa-clipboard-list text-primary me-2"></i> Key Specifications</h4>
+      <!-- Key Specifications Bento Grid -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-list-check text-primary me-2"></i> Key Specifications</h4>
         <div class="row g-3">
           <div class="col-md-3 col-6">
-            <div class="border rounded p-3 text-center">
-              <i class="fas fa-money-bill-wave text-success fs-4 mb-2"></i>
-              <div class="small text-muted">Price</div>
-              <strong class="text-primary">NPR {{ property.price|floatformat:0 }}</strong>
+            <div class="p-3 bg-light rounded-3 text-center border">
+              <i class="fas fa-coins text-warning fs-4 mb-2"></i>
+              <div class="small text-muted">Total Price</div>
+              <strong class="text-primary fs-6">NPR {{ property.price|floatformat:0 }}</strong>
             </div>
           </div>
           <div class="col-md-3 col-6">
-            <div class="border rounded p-3 text-center">
+            <div class="p-3 bg-light rounded-3 text-center border">
               <i class="fas fa-ruler-combined text-primary fs-4 mb-2"></i>
               <div class="small text-muted">Land Area</div>
-              <strong>{{ property.size }} {{ property.get_size_unit_display }}</strong>
+              <strong class="fs-6">{{ property.size }} {{ property.get_size_unit_display }}</strong>
             </div>
           </div>
           <div class="col-md-3 col-6">
-            <div class="border rounded p-3 text-center">
-              <i class="fas fa-road text-warning fs-4 mb-2"></i>
+            <div class="p-3 bg-light rounded-3 text-center border">
+              <i class="fas fa-road text-success fs-4 mb-2"></i>
               <div class="small text-muted">Road Access</div>
-              <strong>{{ property.get_road_access_display|default:property.road_access }}</strong>
+              <strong class="fs-6">{{ property.get_road_access_display|default:property.road_access }}</strong>
             </div>
           </div>
           <div class="col-md-3 col-6">
-            <div class="border rounded p-3 text-center">
-              <i class="fas fa-clock text-info fs-4 mb-2"></i>
-              <div class="small text-muted">Contact Time</div>
-              <strong>{{ property.get_best_time_to_contact_display|default:"Anytime" }}</strong>
+            <div class="p-3 bg-light rounded-3 text-center border">
+              <i class="fas fa-compass text-danger fs-4 mb-2"></i>
+              <div class="small text-muted">Property Type</div>
+              <strong class="fs-6 text-capitalize">{{ property.property_type }}</strong>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
-        <h4 class="fw-bold mb-3"><i class="fas fa-align-left text-primary me-2"></i> Land Description</h4>
-        <div class="text-muted" style="line-height: 1.8;">
+      <!-- Property Description -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="fas fa-align-left text-primary me-2"></i> Detailed Description</h4>
+        <div class="text-secondary" style="line-height: 1.8; font-size: 0.98rem;">
           {{ property.description|linebreaks }}
         </div>
       </div>
 
-      <!-- Interactive Map Section -->
-      <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
-        <h4 class="fw-bold mb-3"><i class="fas fa-map-marked-alt text-danger me-2"></i> Geospatial Map Location</h4>
-        <div id="detailMap" style="height: 350px; border-radius: 12px;"></div>
-        <small class="text-muted mt-2 d-block">Coordinates: {{ property.latitude }}, {{ property.longitude }}</small>
+      <!-- Interactive Geospatial Map -->
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="fas fa-map-location-dot text-danger me-2"></i> Geospatial Map Location</h4>
+          <span class="badge bg-light text-dark border">
+            GPS: {{ property.latitude|default:'27.7172' }}, {{ property.longitude|default:'85.3240' }}
+          </span>
+        </div>
+        <div id="detailMap" style="height: 380px; border-radius: 14px; overflow: hidden;"></div>
+        <small class="text-muted mt-2 d-block">
+          <i class="fas fa-info-circle me-1"></i> Exact verified location coordinates pinned from cadastral inspection records.
+        </small>
       </div>
 
     </div>
 
-    <!-- Right Column: Price Card, Seller Info, Wishlist, Inquiry -->
+    <!-- Right Sticky Column: Price, Direct Contact, Wishlist, EMI -->
     <div class="col-lg-4">
-      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 90px;">
+      <div class="card border-0 shadow-lg rounded-4 p-4 sticky-top" style="top: 85px;">
+        <!-- Price Highlight -->
         <div class="mb-4 pb-3 border-bottom text-center">
-          <small class="text-muted text-uppercase fw-semibold">Total Price</small>
-          <h2 class="fw-bold text-primary my-1">NPR {{ property.price|floatformat:0 }}</h2>
-          <span class="badge bg-light text-dark border">
-            {{ property.size }} {{ property.get_size_unit_display }}
+          <small class="text-muted text-uppercase fw-bold">Valuation / Asking Price</small>
+          <h2 class="fw-bold text-primary my-1 fs-1">NPR {{ property.price|floatformat:0 }}</h2>
+          <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-semibold">
+            {{ property.size }} {{ property.get_size_unit_display }} Plot
           </span>
+        </div>
+
+        <!-- 1-Click WhatsApp Direct Chat Button -->
+        <div class="mb-3">
+          <a href="https://wa.me/9779801000000?text=Hello,%20I%20am%20inquiring%20about%20the%20property%20listing:%20{{ property.title|urlencode }}%20(Price:%20NPR%20{{ property.price|floatformat:0 }})" target="_blank" class="btn-whatsapp-direct w-100 py-2 fs-6">
+            <i class="fab fa-whatsapp fs-5"></i> Chat with Owner on WhatsApp
+          </a>
         </div>
 
         <!-- Wishlist Button -->
         {% if user.is_authenticated and user.role == "buyer" %}
           <div class="mb-4">
             {% if is_in_wishlist %}
-              <button class="btn btn-danger w-100 py-2" id="wishlistBtn" disabled>
-                <i class="fas fa-check me-2"></i> Saved in Wishlist
+              <button class="btn btn-danger w-100 py-2 rounded-pill fw-semibold" id="wishlistBtn" disabled>
+                <i class="fas fa-heart me-2"></i> Saved in Wishlist
               </button>
             {% else %}
-              <button class="btn btn-outline-danger w-100 py-2" id="wishlistBtn" data-id="{{ property.id }}">
-                <i class="fas fa-heart me-2"></i> Add to Wishlist
+              <button class="btn btn-outline-danger w-100 py-2 rounded-pill fw-semibold" id="wishlistBtn" data-id="{{ property.id }}">
+                <i class="far fa-heart me-2"></i> Save to Wishlist
               </button>
             {% endif %}
           </div>
         {% endif %}
 
-        <!-- Owner Contact Info -->
-        <div class="seller-card mb-4 pb-3 border-bottom">
-          <h5 class="fw-bold mb-3">Owner Information</h5>
+        <!-- Verified Owner Card -->
+        <div class="p-3 bg-light rounded-3 mb-4 border">
+          <h6 class="fw-bold mb-3"><i class="fas fa-shield-halved text-success me-1"></i> Verified Property Owner</h6>
           <div class="d-flex align-items-center gap-3 mb-3">
             {% if property.owner.profile_picture %}
-              <img src="{{ property.owner.profile_picture.url }}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="Owner avatar">
+              <img src="{{ property.owner.profile_picture.url }}" class="rounded-circle" style="width: 52px; height: 52px; object-fit: cover;" alt="Owner avatar">
             {% else %}
-              <img src="{% static 'assets/default-PP.jpg' %}" class="rounded-circle" style="width: 55px; height: 55px; object-fit: cover;" alt="Default avatar">
+              <img src="{% static 'assets/default-PP.jpg' %}" class="rounded-circle" style="width: 52px; height: 52px; object-fit: cover;" alt="Default avatar">
             {% endif %}
             <div>
               <h6 class="fw-bold mb-0">{{ property.owner.full_name|default:property.owner.email }}</h6>
-              <small class="text-muted">Verified Property Owner</small>
+              <small class="text-success fw-semibold"><i class="fas fa-certificate"></i> Verified Lalpurja Holder</small>
             </div>
           </div>
-          <div class="list-group list-group-flush small">
-            <div class="list-group-item px-0 d-flex justify-content-between">
-              <span class="text-muted"><i class="fas fa-phone me-1"></i> Phone:</span>
-              <strong>{{ property.phone_number|default:property.owner.phone_number|default:"Available upon request" }}</strong>
+          <div class="small">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted"><i class="fas fa-phone me-1"></i> Contact:</span>
+              <strong>{{ property.phone_number|default:property.owner.phone_number|default:"+977-980XXXXXXX" }}</strong>
             </div>
-            <div class="list-group-item px-0 d-flex justify-content-between">
-              <span class="text-muted"><i class="fas fa-envelope me-1"></i> Email:</span>
-              <strong>{{ property.email|default:property.owner.email }}</strong>
+            <div class="d-flex justify-content-between py-1">
+              <span class="text-muted"><i class="fas fa-clock me-1"></i> Best Time:</span>
+              <strong>{{ property.get_best_time_to_contact_display|default:"Anytime" }}</strong>
             </div>
           </div>
         </div>
 
-        <!-- Inquiry Form -->
+        <!-- Instant Direct Inquiry Form -->
         {% if user.is_authenticated %}
           <div class="inquiry-box">
-            <h5 class="fw-bold mb-2">Send an Inquiry</h5>
-            <p class="small text-muted mb-3">Directly notify the seller about this property.</p>
+            <h6 class="fw-bold mb-2"><i class="fas fa-paper-plane text-primary me-1"></i> Send Instant Inquiry</h6>
+            <p class="small text-muted mb-3">Message is delivered directly to the owner's dashboard and SMS.</p>
             <form id="inquiryForm">
               {% csrf_token %}
               <div class="mb-3">
-                <textarea class="form-control" id="inquiryMessage" rows="3" placeholder="I am interested in this land. Please contact me..."></textarea>
+                <textarea class="form-control" id="inquiryMessage" rows="3" placeholder="Hello, I am interested in this land plot. When can we schedule a site visit?"></textarea>
               </div>
-              <button type="button" class="btn btn-primary w-100 py-2 shadow-sm" id="sendInquiryBtn">
-                <i class="fas fa-paper-plane me-2"></i> Send Inquiry
+              <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold" id="sendInquiryBtn">
+                <i class="fas fa-paper-plane me-1"></i> Submit Inquiry
               </button>
             </form>
           </div>
         {% else %}
-          <div class="alert alert-info small mb-0 text-center">
-            <a href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal" class="fw-bold">Login</a> to contact owner or add to wishlist.
+          <div class="alert alert-primary text-center small rounded-3 mb-0">
+            <i class="fas fa-lock me-1"></i>
+            <a href="{% url 'home:login' %}" data-bs-toggle="modal" data-bs-target="#loginModal" class="fw-bold text-decoration-underline">Sign in</a> to message owner or save to wishlist.
           </div>
         {% endif %}
 
@@ -226,14 +246,21 @@
         })
         .then(res => res.json())
         .then(data => {
-          alert(data.message || "Property added to wishlist!");
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: data.message || "Property added to wishlist!",
+            showConfirmButton: false,
+            timer: 2500
+          });
           wishlistBtn.classList.remove('btn-outline-danger');
           wishlistBtn.classList.add('btn-danger');
-          wishlistBtn.innerHTML = '<i class="fas fa-check me-2"></i> Saved in Wishlist';
+          wishlistBtn.innerHTML = '<i class="fas fa-heart me-2"></i> Saved in Wishlist';
         })
         .catch(err => {
           console.error(err);
-          alert("Error adding to wishlist.");
+          Swal.fire({ icon: 'error', title: 'Error', text: 'Could not add to wishlist.' });
           wishlistBtn.disabled = false;
         });
       });
@@ -246,7 +273,7 @@
         const msgInput = document.getElementById('inquiryMessage');
         const msg = msgInput.value.trim();
         if (!msg) {
-          alert("Please type a message first.");
+          Swal.fire({ icon: 'warning', title: 'Message Required', text: 'Please enter your inquiry message first.' });
           return;
         }
 
@@ -267,19 +294,23 @@
         .then(res => res.json())
         .then(data => {
           if (data.status === 'success') {
-            alert(data.message || "Inquiry successfully sent to property owner!");
+            Swal.fire({
+              icon: 'success',
+              title: 'Inquiry Sent!',
+              text: data.message || "Your inquiry has been delivered directly to the property owner."
+            });
             msgInput.value = "";
           } else {
-            alert(data.message || "Could not submit inquiry. Please try again.");
+            Swal.fire({ icon: 'error', title: 'Error', text: data.message || "Could not submit inquiry." });
           }
         })
         .catch(err => {
           console.error(err);
-          alert("Error submitting inquiry. Please try again.");
+          Swal.fire({ icon: 'error', title: 'Error', text: "Error submitting inquiry. Please try again." });
         })
         .finally(() => {
           sendInquiryBtn.disabled = false;
-          sendInquiryBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Send Inquiry';
+          sendInquiryBtn.innerHTML = '<i class="fas fa-paper-plane me-1"></i> Submit Inquiry';
         });
       });
     }

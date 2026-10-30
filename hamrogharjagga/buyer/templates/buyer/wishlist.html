@@ -1,14 +1,19 @@
 {% extends 'home/base.html' %}
 {% load static %}
 
+{% block title %}My Saved Properties - HamroGharJagga Nepal{% endblock %}
+
 {% block content %}
 <div class="container py-5">
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-      <h2 class="fw-bold mb-1"><i class="fas fa-heart text-danger me-2"></i> Your Saved Wishlist</h2>
-      <p class="text-muted mb-0">Properties you have shortlisted for inspection or purchase.</p>
+      <span class="badge bg-danger bg-opacity-10 text-danger fw-bold text-uppercase px-3 py-2 rounded-pill small mb-2">
+        Buyer Shortlist
+      </span>
+      <h2 class="fw-bold mb-1"><i class="fas fa-heart text-danger me-2"></i> Your Saved Land Wishlist</h2>
+      <p class="text-muted mb-0">Track and compare shortlisted land parcels across Nepal.</p>
     </div>
-    <a href="{% url 'buyer:find_land' %}" class="btn btn-outline-primary">
+    <a href="{% url 'buyer:find_land' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
       <i class="fas fa-search me-1"></i> Browse More Land
     </a>
   </div>
@@ -17,28 +22,32 @@
     <div class="row g-4">
       {% for item in wishlist_items %}
         <div class="col-lg-4 col-md-6">
-          <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden">
-            <div style="height: 200px; overflow: hidden; position: relative;">
-              <img src="{{ item.property.main_image }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ item.property.title }}">
-              <span class="badge bg-primary position-absolute top-0 start-0 m-2 text-capitalize">
-                {{ item.property.property_type }}
-              </span>
+          <div class="property-card-modern">
+            <div class="card-media-wrapper">
+              <img src="{{ item.property.main_image }}" class="card-media-img" alt="{{ item.property.title }}">
+              <span class="badge-tag-type">{{ item.property.property_type }}</span>
+              <span class="badge-verified-clean"><i class="fas fa-check-circle"></i> Verified</span>
+              {% if item.property.road_access %}
+                <span class="badge-road-width"><i class="fas fa-road text-muted"></i> {{ item.property.road_access }}</span>
+              {% endif %}
             </div>
-            <div class="card-body d-flex flex-column">
-              <h5 class="fw-bold mb-2">{{ item.property.title }}</h5>
-              <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ item.property.location }}</p>
-              
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="h5 fw-bold text-primary mb-0">NPR {{ item.property.price|floatformat:0 }}</span>
-                <span class="badge bg-light text-dark border">{{ item.property.size }} {{ item.property.get_size_unit_display }}</span>
+            <div class="card-content-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="property-price-main">NPR {{ item.property.price|floatformat:0 }}</span>
+                <span class="property-unit-pill">{{ item.property.size }} {{ item.property.get_size_unit_display }}</span>
               </div>
+              <h5 class="fw-bold mb-1 text-truncate" title="{{ item.property.title }}">{{ item.property.title }}</h5>
+              <p class="text-muted small mb-3"><i class="fas fa-location-dot text-danger me-1"></i> {{ item.property.location }}</p>
 
               <div class="mt-auto d-flex gap-2 pt-3 border-top">
-                <a href="{% url 'seller:property_detail' item.property.id %}" class="btn btn-primary btn-sm flex-grow-1">
+                <a href="{% url 'seller:property_detail' item.property.id %}" class="btn btn-primary btn-sm flex-grow-1 rounded-pill fw-semibold">
                   View Details
                 </a>
-                <a href="{% url 'buyer:remove_wishlist' item.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Remove this property from wishlist?');">
-                  <i class="fas fa-trash"></i>
+                <a href="https://wa.me/9779801000000?text=Hello,%20inquiring%20about%20my%20wishlist%20property%20{{ item.property.id }}%20({{ item.property.title|urlencode }})" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3" title="Chat on WhatsApp">
+                  <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="{% url 'buyer:remove_wishlist' item.id %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('Remove this plot from your wishlist?');" title="Remove">
+                  <i class="fas fa-trash-can"></i>
                 </a>
               </div>
             </div>
@@ -48,12 +57,14 @@
     </div>
   {% else %}
     <div class="text-center py-5">
-      <i class="fas fa-heart-broken fa-4x text-muted mb-3"></i>
-      <h3>Your wishlist is empty</h3>
-      <p class="text-muted">You have not bookmarked any land properties yet.</p>
-      <a href="{% url 'buyer:find_land' %}" class="btn btn-primary mt-2">
-        <i class="fas fa-search me-1"></i> Discover Land in Nepal
-      </a>
+      <div class="p-5 bg-white rounded-4 shadow-sm max-w-600 mx-auto">
+        <i class="fas fa-heart-crack fa-4x text-muted mb-3 opacity-50"></i>
+        <h3 class="fw-bold">Your Wishlist is Empty</h3>
+        <p class="text-muted mb-4">You have not bookmarked any land parcels yet. Click the heart icon on any listing to save it here.</p>
+        <a href="{% url 'buyer:find_land' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+          <i class="fas fa-compass me-1"></i> Discover Land in Nepal
+        </a>
+      </div>
     </div>
   {% endif %}
 </div>

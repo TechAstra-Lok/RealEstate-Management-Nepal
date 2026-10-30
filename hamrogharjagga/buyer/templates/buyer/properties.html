@@ -1,77 +1,87 @@
 {% extends 'home/base.html' %}
 {% load static %}
 
-{% block title %}Search Land Properties - HamroGhajagga{% endblock %}
+{% block title %}Explore Verified Land Properties in Nepal - HamroGharJagga{% endblock %}
 
 {% block content %}
-<style>
-  .leaflet-control-attribution {
-    display: none !important;
-  }
-  .property-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .property-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-  }
-  .map-container {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-</style>
+<div class="container-fluid px-lg-5 py-4">
+  <!-- Top Breadcrumb & Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">
+        <i class="fas fa-map-location-dot text-primary me-2"></i> Land &amp; Plots in Nepal
+      </h2>
+      <p class="text-muted small mb-0">Showing {{ properties|length }} verified plots available for purchase or investment.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-outline-primary btn-sm rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#mapCollapse">
+        <i class="fas fa-map me-1"></i> Toggle Map View
+      </button>
+      <a href="{% url 'buyer:find_land' %}" class="btn btn-light btn-sm rounded-pill px-3 border">
+        <i class="fas fa-rotate-left me-1"></i> Reset Filters
+      </a>
+    </div>
+  </div>
 
-<div class="container-fluid py-4">
+  <!-- Interactive Map Section (Collapsible) -->
+  <div class="collapse show mb-4" id="mapCollapse">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div id="map" style="height: 380px; width: 100%;"></div>
+    </div>
+  </div>
+
   <div class="row g-4">
     <!-- Filter Sidebar (Col 3) -->
     <div class="col-lg-3">
-      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 80px;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0"><i class="fas fa-filter text-primary me-2"></i> Filters</h5>
-          <a href="{% url 'buyer:find_land' %}" class="small text-muted text-decoration-none">Reset</a>
+      <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 85px;">
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+          <h5 class="fw-bold mb-0"><i class="fas fa-sliders text-primary me-2"></i> Refine Search</h5>
+          <a href="{% url 'buyer:find_land' %}" class="small text-muted text-decoration-none">Clear All</a>
         </div>
 
         <form method="GET" action="{% url 'buyer:find_land' %}" id="filter-form">
-          <!-- Location inputs -->
+          <!-- Province -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Province</label>
-            <input type="text" name="province" class="form-control form-control-sm" placeholder="e.g. Bagmati, Koshi" value="{{ province }}">
+            <label class="form-label small fw-bold text-muted">Province</label>
+            <input type="text" name="province" class="form-control form-control-sm search-form-control" placeholder="e.g. Bagmati, Gandaki" value="{{ province }}">
           </div>
 
+          <!-- District -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">District</label>
-            <input type="text" name="district" class="form-control form-control-sm" placeholder="e.g. Kathmandu, Lalitpur" value="{{ district }}">
+            <label class="form-label small fw-bold text-muted">District</label>
+            <input type="text" name="district" class="form-control form-control-sm search-form-control" placeholder="e.g. Kathmandu, Chitwan" value="{{ district }}">
           </div>
 
+          <!-- Municipality -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Municipality</label>
-            <input type="text" name="municipality" class="form-control form-control-sm" placeholder="e.g. Budhanilkantha" value="{{ municipality }}">
+            <label class="form-label small fw-bold text-muted">Municipality / City</label>
+            <input type="text" name="municipality" class="form-control form-control-sm search-form-control" placeholder="e.g. Budhanilkantha" value="{{ municipality }}">
           </div>
 
           <!-- Price Range -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Price Range (NPR)</label>
+            <label class="form-label small fw-bold text-muted">Price Range (NPR)</label>
             <div class="row g-2">
               <div class="col-6">
-                <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min Price" value="{{ min_price }}">
+                <input type="number" name="min_price" class="form-control form-control-sm search-form-control" placeholder="Min" value="{{ min_price }}">
               </div>
               <div class="col-6">
-                <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max Price" value="{{ max_price }}">
+                <input type="number" name="max_price" class="form-control form-control-sm search-form-control" placeholder="Max" value="{{ max_price }}">
               </div>
             </div>
           </div>
 
-          <!-- Area -->
+          <!-- Minimum Land Area -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Min Land Area</label>
+            <label class="form-label small fw-bold text-muted">Minimum Land Area</label>
             <div class="row g-2">
               <div class="col-7">
-                <input type="number" step="0.1" name="area_size" class="form-control form-control-sm" placeholder="Size" value="{{ area_size }}">
+                <input type="number" step="0.1" name="area_size" class="form-control form-control-sm search-form-control" placeholder="Size" value="{{ area_size }}">
               </div>
               <div class="col-5">
-                <select name="area_unit" class="form-select form-select-sm">
+                <select name="area_unit" class="form-select form-select-sm search-form-control">
                   <option value="ropani" {% if area_unit == 'ropani' %}selected{% endif %}>Ropani</option>
+                  <option value="aana" {% if area_unit == 'aana' %}selected{% endif %}>Aana</option>
                   <option value="bigha" {% if area_unit == 'bigha' %}selected{% endif %}>Bigha</option>
                   <option value="kattha" {% if area_unit == 'kattha' %}selected{% endif %}>Kattha</option>
                   <option value="dhur" {% if area_unit == 'dhur' %}selected{% endif %}>Dhur</option>
@@ -82,109 +92,98 @@
 
           <!-- Property Type -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Property Type</label>
-            <select name="property_type" class="form-select form-select-sm">
-              <option value="">All Types</option>
-              <option value="residential" {% if property_type == 'residential' %}selected{% endif %}>Residential</option>
-              <option value="commercial" {% if property_type == 'commercial' %}selected{% endif %}>Commercial</option>
-              <option value="agricultural" {% if property_type == 'agricultural' %}selected{% endif %}>Agricultural</option>
+            <label class="form-label small fw-bold text-muted">Property Category</label>
+            <select name="property_type" class="form-select form-select-sm search-form-control">
+              <option value="">All Categories</option>
+              <option value="residential" {% if property_type == 'residential' %}selected{% endif %}>Residential Plot</option>
+              <option value="commercial" {% if property_type == 'commercial' %}selected{% endif %}>Commercial Land</option>
+              <option value="agricultural" {% if property_type == 'agricultural' %}selected{% endif %}>Agricultural / Farm</option>
               <option value="industrial" {% if property_type == 'industrial' %}selected{% endif %}>Industrial</option>
             </select>
           </div>
 
           <!-- Road Access -->
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Road Access</label>
-            <select name="road_access" class="form-select form-select-sm">
-              <option value="">Any Road</option>
-              <option value="pitched" {% if road_access == 'pitched' %}selected{% endif %}>Pitched Road</option>
+            <label class="form-label small fw-bold text-muted">Road Access Quality</label>
+            <select name="road_access" class="form-select form-select-sm search-form-control">
+              <option value="">Any Road Type</option>
+              <option value="pitched" {% if road_access == 'pitched' %}selected{% endif %}>Blacktopped / Pitched</option>
               <option value="gravel" {% if road_access == 'gravel' %}selected{% endif %}>Gravel Road</option>
-              <option value="soil" {% if road_access == 'soil' %}selected{% endif %}>Soil Road</option>
+              <option value="soil" {% if road_access == 'soil' %}selected{% endif %}>Soil / Earthen Track</option>
             </select>
           </div>
 
-          <!-- Sort -->
+          <!-- Sort Order -->
           <div class="mb-4">
-            <label class="form-label small fw-semibold">Sort Order</label>
-            <select name="sort" class="form-select form-select-sm">
+            <label class="form-label small fw-bold text-muted">Sort By</label>
+            <select name="sort" class="form-select form-select-sm search-form-control">
+              <option value="date-desc" {% if sort_option == 'date-desc' %}selected{% endif %}>Newest First</option>
               <option value="price-asc" {% if sort_option == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
               <option value="price-desc" {% if sort_option == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
               <option value="area-asc" {% if sort_option == 'area-asc' %}selected{% endif %}>Area: Small to Large</option>
               <option value="area-desc" {% if sort_option == 'area-desc' %}selected{% endif %}>Area: Large to Small</option>
-              <option value="date-desc" {% if sort_option == 'date-desc' %}selected{% endif %}>Newest First</option>
             </select>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100 btn-sm py-2">
-            <i class="fas fa-search me-1"></i> Apply Filters
+          <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold">
+            <i class="fas fa-filter me-1"></i> Apply Filters
           </button>
         </form>
       </div>
     </div>
 
-    <!-- Main Results Column (Col 9) -->
+    <!-- Properties Grid Column (Col 9) -->
     <div class="col-lg-9">
-      <!-- Interactive Geospatial Map -->
-      <div class="map-container mb-4">
-        <div id="map" style="height: 380px;"></div>
-      </div>
-
-      <!-- Results Count Bar -->
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">
-          Available Land Properties 
-          <span class="badge bg-primary ms-2">{{ properties|length }} found</span>
-        </h5>
-      </div>
-
-      <!-- Properties Grid -->
       <div class="row g-4" id="property-list">
         {% for property in properties %}
           <div class="col-lg-4 col-md-6">
-            <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden property-card">
-              <div style="height: 200px; overflow: hidden; position: relative;">
-                <img src="{{ property.main_image }}" class="w-100 h-100" style="object-fit: cover;" alt="{{ property.title }}">
-                <span class="badge bg-primary position-absolute top-0 start-0 m-2 text-capitalize">
-                  {{ property.property_type }}
-                </span>
-                <span class="badge bg-success position-absolute top-0 end-0 m-2">
-                  Verified
-                </span>
+            <div class="property-card-modern">
+              <div class="card-media-wrapper">
+                <img src="{{ property.main_image }}" class="card-media-img" alt="{{ property.title }}">
+                <span class="badge-tag-type">{{ property.property_type }}</span>
+                <span class="badge-verified-clean"><i class="fas fa-check-circle"></i> Verified</span>
+                {% if property.road_access %}
+                  <span class="badge-road-width"><i class="fas fa-road text-muted"></i> {{ property.road_access }}</span>
+                {% endif %}
+                <button class="btn-wishlist-float add-wishlist-btn" data-id="{{ property.id }}" title="Add to Wishlist">
+                  <i class="fas fa-heart"></i>
+                </button>
               </div>
-              <div class="card-body d-flex flex-column">
-                <h5 class="fw-bold mb-1">{{ property.title }}</h5>
-                <p class="text-muted small mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ property.location }}</p>
-                
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <span class="h5 fw-bold text-primary mb-0">NPR {{ property.price|floatformat:0 }}</span>
-                  <span class="badge bg-light text-dark border">{{ property.size }} {{ property.get_size_unit_display }}</span>
+              <div class="card-content-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="property-price-main">NPR {{ property.price|floatformat:0 }}</span>
+                  <span class="property-unit-pill">{{ property.size }} {{ property.get_size_unit_display }}</span>
                 </div>
-
-                <p class="small text-muted mb-3 flex-grow-1">
-                  {{ property.description|truncatewords:14 }}
+                <h5 class="fw-bold mb-1 text-truncate" title="{{ property.title }}">{{ property.title }}</h5>
+                <p class="text-muted small mb-2"><i class="fas fa-location-dot text-danger me-1"></i> {{ property.location }}</p>
+                <p class="small text-muted mb-3 flex-grow-1" style="line-height: 1.6;">
+                  {{ property.description|truncatewords:13 }}
                 </p>
 
-                <div class="d-flex gap-2 pt-2 border-top">
-                  <a href="{% url 'seller:property_detail' property.id %}" class="btn btn-primary btn-sm flex-grow-1">
+                <div class="d-flex gap-2 pt-2 border-top mt-auto">
+                  <a href="{% url 'seller:property_detail' property.id %}" class="btn btn-primary btn-sm flex-grow-1 rounded-pill fw-semibold">
                     View Details
                   </a>
-                  <button class="btn btn-outline-danger btn-sm add-wishlist-btn" data-id="{{ property.id }}" title="Save to Wishlist">
-                    <i class="fas fa-heart"></i>
-                  </button>
+                  <a href="https://wa.me/9779801000000?text=Hello,%20inquiring%20about%20property%20{{ property.id }}%20({{ property.title|urlencode }})" target="_blank" class="btn btn-outline-success btn-sm rounded-pill px-3" title="Chat on WhatsApp">
+                    <i class="fab fa-whatsapp"></i>
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         {% empty %}
           <div class="col-12 text-center py-5">
-            <i class="fas fa-search-location fa-4x text-muted mb-3"></i>
-            <h3>No matching properties found</h3>
-            <p class="text-muted">Try adjusting your filters, location, or price parameters.</p>
-            <a href="{% url 'buyer:find_land' %}" class="btn btn-primary mt-2">View All Properties</a>
+            <div class="p-5 bg-white rounded-4 shadow-sm">
+              <i class="fas fa-map-location-dot fa-4x text-muted mb-3 opacity-50"></i>
+              <h3 class="fw-bold">No Matching Plots Found</h3>
+              <p class="text-muted mb-4">Try relaxing your price, area, or location parameters to see more listings.</p>
+              <a href="{% url 'buyer:find_land' %}" class="btn btn-primary rounded-pill px-4 fw-semibold">
+                Reset All Filters
+              </a>
+            </div>
           </div>
         {% endfor %}
       </div>
-
     </div>
   </div>
 </div>
@@ -213,12 +212,12 @@
       if (p.lat && p.lng) {
         const marker = L.marker([p.lat, p.lng]).addTo(map);
         marker.bindPopup(`
-          <div style="min-width: 180px;">
-            <img src="${p.image}" style="width: 100%; height: 90px; object-fit: cover; border-radius: 6px; margin-bottom: 6px;">
-            <h6 style="margin: 0; font-weight: bold;">${p.title}</h6>
-            <div style="color: #0d6efd; font-weight: bold; margin: 4px 0;">NPR ${Number(p.price).toLocaleString()}</div>
-            <small style="color: #666; display: block; margin-bottom: 8px;">${p.size} ${p.size_unit}</small>
-            <a href="${p.detail_url}" class="btn btn-sm btn-primary w-100 text-white" style="font-size: 11px;">View Details</a>
+          <div style="min-width: 200px; font-family: 'Plus Jakarta Sans', sans-serif;">
+            <img src="${p.image}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
+            <h6 style="margin: 0; font-weight: bold; font-size: 14px;">${p.title}</h6>
+            <div style="color: #0F52BA; font-weight: 800; font-size: 15px; margin: 4px 0;">NPR ${Number(p.price).toLocaleString()}</div>
+            <small style="color: #64748B; display: block; margin-bottom: 8px;">${p.size} ${p.size_unit}</small>
+            <a href="${p.detail_url}" class="btn btn-sm btn-primary w-100 text-white rounded-pill" style="font-size: 12px; font-weight: 600;">View Details &rarr;</a>
           </div>
         `);
         bounds.extend([p.lat, p.lng]);
@@ -226,10 +225,10 @@
     });
 
     if (markersData.length > 0 && !bounds.isEmpty()) {
-      map.fitBounds(bounds, { padding: [30, 30] });
+      map.fitBounds(bounds, { padding: [35, 35] });
     }
 
-    // Wishlist Button Handlers
+    // Wishlist Button Handlers with SweetAlert2
     document.querySelectorAll('.add-wishlist-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -243,13 +242,24 @@
         })
         .then(res => res.json())
         .then(data => {
-          alert(data.message || "Added to wishlist!");
-          btn.classList.remove('btn-outline-danger');
-          btn.classList.add('btn-danger');
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: data.message || "Added to wishlist!",
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true
+          });
+          btn.classList.add('active');
         })
         .catch(err => {
           console.error(err);
-          alert("Error adding to wishlist.");
+          Swal.fire({
+            icon: 'error',
+            title: 'Please Login',
+            text: 'You need to be logged in as a buyer to save properties to your wishlist.',
+          });
         });
       });
     });
